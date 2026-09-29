@@ -8,6 +8,9 @@ credentials
 credentials.json
 secrets
 secrets.json
+*.db
+*.sqlite
+*.sqlite3
 
 # Node & Frontend
 node_modules/
