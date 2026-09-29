@@ -1,4 +1,4 @@
-from typing import Generator
+from typing import Optional
 from fastapi import Depends, Header
 from sqlalchemy.orm import Session
 from app.db.base import get_db
@@ -27,4 +27,28 @@ def get_current_user(
     if not user or not user.is_active:
         raise UnauthorizedException("User account not found or inactive.")
     
+    return user
+
+
+def get_current_user_optional(
+    authorization: Optional[str] = Header(None),
+    db: Session = Depends(get_db)
+) -> Optional[User]:
+    if not authorization:
+        return None
+    
+    parts = authorization.split(" ")
+    if len(parts) != 2 or parts[0].lower() != "bearer":
+        return None
+    
+    token = parts[1]
+    payload = decode_access_token(token)
+    if not payload or "sub" not in payload:
+        return None
+    
+    user_id = payload.get("sub")
+    if not user_id:
+        return None
+        
+    user = db.query(User).filter(User.id == user_id, User.is_active == True).first()
     return user
