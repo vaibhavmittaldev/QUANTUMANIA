@@ -25,6 +25,14 @@ class Settings(BaseModel):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
 
+    # Phase 5: AI Quantum Tutor Configuration
+    AI_PROVIDER: str = os.getenv("AI_PROVIDER", "auto")
+    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
+    OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
+    AI_MODEL: str = os.getenv("AI_MODEL", "gemini-1.5-flash")
+    TUTOR_MAX_HISTORY: int = int(os.getenv("TUTOR_MAX_HISTORY", "10"))
+    TUTOR_TEMPERATURE: float = float(os.getenv("TUTOR_TEMPERATURE", "0.2"))
+
 settings = Settings()
 
 # Add CLIENT_ORIGIN if provided in env

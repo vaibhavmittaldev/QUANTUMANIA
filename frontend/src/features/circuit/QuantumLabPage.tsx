@@ -14,7 +14,9 @@ import { CircuitCodeModal } from './components/CircuitCodeModal';
 import { ResetConfirmModal } from './components/ResetConfirmModal';
 import { CircuitHelpModal } from './components/CircuitHelpModal';
 import { SimulationResultsPanel } from './components/SimulationResultsPanel';
+import { TutorPanel } from './components/TutorPanel';
 import { CIRCUIT_TEMPLATES } from './domain/circuitTemplates';
+
 import { simulateCircuit } from './simulator/quantumSimulator';
 import { SimulationResult } from '../../types/circuit';
 import {
@@ -27,8 +29,10 @@ import {
   CheckCircle2,
   AlertTriangle,
   Info,
-  Loader2
+  Loader2,
+  Sparkles
 } from 'lucide-react';
+
 
 
 const QuantumLabInner: React.FC = () => {
@@ -58,12 +62,27 @@ const QuantumLabInner: React.FC = () => {
   const [shots, setShots] = useState(1024);
   const [lastSimulatedSignature, setLastSimulatedSignature] = useState<string | null>(null);
 
+  // Phase 5: AI Quantum Tutor State
+  const [isTutorOpen, setIsTutorOpen] = useState(true);
+
+  // Derive lesson context from search params or active template
+  const lessonParam = searchParams.get('lesson') || searchParams.get('title');
+  const activeLessonContext =
+    lessonParam || selectedTemplateId
+      ? {
+          lesson_id: searchParams.get('lesson_id') || undefined,
+          title: lessonParam || (selectedTemplateId ? `Template: ${selectedTemplateId}` : 'Interactive Lab'),
+          topic: searchParams.get('topic') || 'Quantum Algorithm Foundations'
+        }
+      : null;
+
   // Detect stale results when circuit is modified
   const currentCircuitSignature = JSON.stringify(circuit.gates);
   const isStale =
     simulationResult !== null &&
     lastSimulatedSignature !== null &&
     lastSimulatedSignature !== currentCircuitSignature;
+
 
   // Handle deep-link query parameter from Phase 2 Lessons (e.g. ?template=bell-state)
   useEffect(() => {
@@ -282,6 +301,29 @@ const QuantumLabInner: React.FC = () => {
             <span>Circuit JSON</span>
           </button>
 
+          {/* Phase 5: AI Quantum Tutor Toggle */}
+          <button
+            type="button"
+            onClick={() => setIsTutorOpen((prev) => !prev)}
+            className={`btn ${isTutorOpen ? 'btn-primary' : 'btn-secondary'}`}
+            title="Toggle AI Quantum Tutor"
+            aria-label="Toggle AI Quantum Tutor Panel"
+            style={{
+              padding: '0.4rem 0.8rem',
+              fontSize: '0.8rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              background: isTutorOpen ? 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)' : undefined,
+              color: isTutorOpen ? '#fff' : undefined,
+              border: isTutorOpen ? '1px solid rgba(168, 85, 247, 0.4)' : undefined
+            }}
+          >
+            <Sparkles size={14} />
+            <span>AI Tutor</span>
+          </button>
+
+
           {/* Shots Selector */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginLeft: '0.25rem' }}>
             <label htmlFor="shots-select" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
@@ -422,7 +464,18 @@ const QuantumLabInner: React.FC = () => {
         onRerun={handleRunSimulation}
       />
 
+      {/* Phase 5: AI Quantum Learning Tutor Panel */}
+      <TutorPanel
+        circuit={circuit}
+        simulationResult={simulationResult}
+        isStale={isStale}
+        lessonContext={activeLessonContext}
+        isOpen={isTutorOpen}
+        onToggle={() => setIsTutorOpen((prev) => !prev)}
+      />
+
       {/* Modals */}
+
       <CircuitCodeModal
 
         isOpen={isCodeModalOpen}
