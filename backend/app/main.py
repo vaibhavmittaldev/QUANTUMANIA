@@ -9,16 +9,18 @@ from app.db.models.user import User, Profile
 from app.db.models.learning import Course, Module, Lesson, LessonProgress
 from app.db.models.adaptive import LearningEventModel, TopicMasteryModel
 from app.services.learning_service import LearningService
+from app.services.demo_service import DemoService
 from app.api.v1.router import api_v1_router
 from app.schemas.common import StandardErrorResponse, ErrorDetail
 
 # Initialize tables
 Base.metadata.create_all(bind=engine)
 
-# Seed canonical curriculum
+# Seed canonical curriculum and demo learner
 _db = SessionLocal()
 try:
     LearningService.seed_curriculum_if_needed(_db)
+    DemoService.seed_demo_account_if_needed(_db)
 finally:
     _db.close()
 

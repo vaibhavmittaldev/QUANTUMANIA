@@ -12,7 +12,8 @@ import { RegisterPage } from './features/auth/RegisterPage';
 import { DashboardPage } from './features/dashboard/DashboardPage';
 import { ProfilePage } from './features/profile/ProfilePage';
 import { SettingsPage } from './features/settings/SettingsPage';
-import { PlaceholderModule } from './features/placeholders/PlaceholderModule';
+import { PracticePage } from './features/practice/PracticePage';
+import { ProgressPage } from './features/progress/ProgressPage';
 import { CoursePage } from './features/learning/CoursePage';
 import { ModulePage } from './features/learning/ModulePage';
 import { LessonPage } from './features/learning/LessonPage';
@@ -83,8 +84,8 @@ export const App: React.FC = () => {
             <Route path="learn/modules/:moduleId" element={<ModulePage />} />
             <Route path="learn/lessons/:lessonId" element={<LessonPage />} />
             <Route path="quantum-lab" element={<QuantumLabPage />} />
-            <Route path="practice" element={<PlaceholderModule moduleId="practice" />} />
-            <Route path="progress" element={<PlaceholderModule moduleId="progress" />} />
+            <Route path="practice" element={<PracticePage />} />
+            <Route path="progress" element={<ProgressPage />} />
             <Route path="profile" element={<ProfilePage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>

@@ -1,176 +1,177 @@
-# System Architecture Specification
+# QUANTUMANIA — Complete System Architecture Specification
 
-## 1. Overview
-
-**QUANTUMANIA** is an AI-based interactive quantum algorithm learning platform designed for the Smart India Hackathon (SIH 2026). Its objective is to bridge the gap between theoretical quantum mechanics and practical algorithm design through visual circuit construction, mathematical statevector simulation, interactive Bloch sphere visualizations, grounded AI tutoring, and progressive assessments.
-
-This document describes the high-level architecture, module boundaries, data flows, and subsystem responsibilities.
+## 1. Executive Summary
+**QUANTUMANIA** is an AI-based interactive quantum algorithm learning platform created for the Smart India Hackathon (SIH 2026). Its mission is to transform abstract quantum mechanics into intuitive, hands-on understanding by integrating:
+1. **Interactive Curriculum:** 20 structured lessons across 5 comprehensive modules.
+2. **Visual Circuit Builder:** High-performance, constraint-validated drag-and-drop workspace.
+3. **Quantum Simulator:** Classical statevector mathematical simulation with 1024-shot sampling and Bloch sphere vector extraction.
+4. **AI Quantum Tutor:** Grounded pedagogical assistant preventing hallucination and explaining quantum states directly.
+5. **Adaptive Learner Intelligence:** Explainable topic mastery engine driving personalized remediation and recommendations.
+6. **Practice Arena & Analytics:** Hands-on lab challenges and instant conceptual skill checks.
 
 ---
 
-## 2. High-Level Architecture Diagram
+## 2. High-Level System Architecture Diagram
 
 ```mermaid
 graph TD
-    User["Learner / Student Browser"]
+    Learner(["Learner / Evaluator Browser"])
     
-    subgraph Frontend["Frontend Layer (React / TypeScript SPA)"]
-        AppShell["App Shell & Navigation"]
-        AuthView["Auth & Profile UI"]
+    subgraph Frontend["Frontend Layer (React 18 / TypeScript / Vite)"]
+        Nav["App Shell & Navigation"]
+        DashView["Personalized Dashboard"]
         LearnView["Curriculum & Lesson Viewer"]
-        CircuitUI["Circuit Builder Canvas (Grid Timeline)"]
-        VizUI["Quantum Visualizer (Statevector, Bloch, Histograms)"]
-        AITutorUI["AI Tutor Dock & Chat Drawer"]
-        AssessUI["Quiz & Challenge Terminal"]
+        LabView["Quantum Lab & Circuit Builder"]
+        SimView["Simulator Results & Bloch Visualization"]
+        TutorDock["AI Quantum Tutor Dock"]
+        PracticeView["Practice Arena & Quizzes"]
+        ProgressView["Topic Mastery & Activity Analytics"]
     end
 
     subgraph BackendAPI["Backend Layer (FastAPI / Modular Monolith)"]
-        Router["API Gateway / Unified Router (/api/v1)"]
-        AuthGuard["JWT Auth & Security Middleware"]
+        Gateway["API Gateway (/api/v1)"]
+        AuthMiddleware["JWT Auth & Security Guard"]
         
-        subgraph DomainServices["Domain Service Layer"]
-            AuthService["Authentication Service"]
-            LearningService["Learning & Curriculum Service"]
-            QuantumService["Circuit Management Service"]
-            SimulatorEngine["Quantum Math & Simulation Engine"]
-            ContextBuilder["AI Grounding & Context Builder"]
-            AIEngine["AI Provider Client"]
-            AssessService["Assessment & Challenge Grader"]
-            ProgressService["Progress Tracking & Analytics"]
+        subgraph Services["Core Domain Services"]
+            AuthSvc["Auth & Profile Service"]
+            LearnSvc["Learning & Curriculum Service"]
+            CircuitSvc["Circuit Validator & Template Service"]
+            SimSvc["Quantum Statevector Engine"]
+            TutorSvc["AI Tutor Service & Prompt Grounding"]
+            EventSvc["Learning Event Tracker"]
+            MasterySvc["Topic Mastery Calculation Engine"]
+            RecSvc["Recommendation Engine"]
+            DemoSvc["SIH Demo Account Seed Service"]
         end
     end
 
-    subgraph ExternalAndData["Data Storage & External Services"]
-        DB[("Relational Database (PostgreSQL / SQLite)")]
-        LLMProvider["External LLM API (Google Gemini / OpenAI)"]
+    subgraph Persistence["Storage & AI Providers"]
+        DB[("Relational Database (SQLite / PostgreSQL)")]
+        AIProvider["External LLM API (Google Gemini / OpenAI / Rule-Based Fallback)"]
     end
 
-    User <--> Frontend
-    Frontend <-->|"REST / JSON (docs/API_CONTRACT.md)"| BackendAPI
+    Learner <--> Frontend
+    Frontend <-->|"REST API / Bearer JWT"| Gateway
+    Gateway --> AuthMiddleware
+    AuthMiddleware --> Services
+
+    AuthSvc <--> DB
+    LearnSvc <--> DB
+    EventSvc <--> DB
+    MasterySvc <--> DB
+    DemoSvc <--> DB
     
-    Router --> AuthGuard
-    AuthGuard --> DomainServices
+    CircuitSvc --> SimSvc
+    SimSvc --> TutorSvc
+    TutorSvc <--> AIProvider
     
-    AuthService <--> DB
-    LearningService <--> DB
-    QuantumService <--> DB
-    AssessService <--> DB
-    ProgressService <--> DB
-    
-    QuantumService --> SimulatorEngine
-    SimulatorEngine -->|"Simulation Result (docs/QUANTUM_SCHEMA.md)"| QuantumService
-    
-    ContextBuilder -->|"Fetch Lesson & Circuit State"| LearningService
-    ContextBuilder -->|"Fetch Verified Simulation"| SimulatorEngine
-    ContextBuilder -->|"Grounding Prompt + Context"| AIEngine
-    AIEngine <-->|"HTTPS API"| LLMProvider
+    EventSvc --> MasterySvc
+    MasterySvc --> RecSvc
 ```
 
 ---
 
-## 3. Subsystem Responsibilities
+## 3. Subsystem Breakdown
 
-### 3.1. Frontend Layer
-* **Role**: Client-side single page application running in the learner's browser.
-* **Responsibilities**:
-  - Render an intuitive, responsive, and aesthetic dark-mode interface (see `docs/UI_SYSTEM.md`).
-  - Provide interactive drag-and-drop circuit composition with immediate local validation.
-  - Render interactive visualizations:
-    - Probability distribution histograms.
-    - Qubit statevector representations (amplitudes, phases, probabilities).
-    - 3D/2D Bloch sphere coordinates for single-qubit states.
-  - Present curriculum content (markdown, math formulas, step-by-step interactive slides).
-  - Provide an accessible AI chat dock accessible on any lesson or circuit sandbox.
-  - Present quizzes, multiple-choice questions, and automated quantum challenge objectives.
-  - Store JWT session tokens in browser memory / secure storage.
-* **Non-Responsibilities**:
-  - Does NOT calculate arbitrary quantum statevectors or simulate multi-qubit unitary matrices client-side without authoritative backend validation.
-  - Does NOT directly invoke external LLM APIs (never expose API keys on client).
+### 3.1. Frontend Architecture
+- **Framework:** React 18, TypeScript 5.5, Vite 5.4.
+- **Styling:** Custom Vanilla CSS Design System with dark-mode obsidian surface (`--bg-surface`), neon cyan accents (`--accent-cyan`), emerald (`--accent-emerald`), and purple (`--accent-purple`). Zero runtime CSS-in-JS overhead.
+- **State Management:**
+  - `AuthContext`: Manages current user session, token storage, and login/logout state.
+  - `CircuitContext`: Manages active circuit canvas, gate positioning, undo/redo history stack, and validation status.
+- **Key Modules:**
+  - `/app/dashboard`: Aggregated metrics, streak, next recommended action, weak area warnings.
+  - `/app/learn`: Interactive curriculum navigation, math formulas, and lesson progress.
+  - `/app/quantum-lab`: Interactive gate palette, timeline grid, statevector probability charts, and measurement histograms.
+  - `/app/practice`: Curated algorithm challenges with 1-click lab launching and instant-feedback concept quizzes.
+  - `/app/progress`: 20-topic mastery matrix, level badges, and chronological learning activity timeline.
 
-### 3.2. Backend API Layer (Modular Monolith)
-* **Role**: Central coordinator and business logic host.
-* **Architectural Choice**: **Modular Monolith**. 
-  - To prevent deployment overhead and latency during SIH development, the backend is packaged as a unified modular service with strictly separated internal domains rather than distributed microservices.
-* **Responsibilities**:
-  - Route incoming HTTP requests, enforce CORS, validate payloads against schemas.
-  - Verify and issue JWT authentication tokens.
-  - Coordinate persistence with the database layer.
-  - Expose standardized JSON responses (`docs/API_CONTRACT.md`).
-  - Orchestrate simulation execution and AI context composition.
+### 3.2. Backend Architecture
+- **Framework:** FastAPI (Python 3.14).
+- **Architecture Pattern:** Clean modular monolith with decoupled service boundaries and dependency injection.
+- **Persistence:** SQLAlchemy ORM with SQLite for zero-config local evaluation (`dev.db`) and PostgreSQL for production deployments.
+- **Security:** Bcrypt password hashing (12 rounds) and signed HMAC-SHA256 JWT tokens with automatic expiry.
 
-### 3.3. Quantum Engine (Simulator Subsystem)
-* **Role**: Deterministic mathematical execution engine for quantum circuits.
-* **Responsibilities**:
-  - Parse and validate canonical circuit schemas (`docs/QUANTUM_SCHEMA.md`).
-  - Construct statevector arrays initialized to $|0\dots0\rangle$.
-  - Apply standard unitary quantum operators ($X, Y, Z, H, CNOT$).
-  - Calculate exact statevector amplitudes, complex phases, and measurement probabilities.
-  - Perform simulated projective measurements over $N$ shots (e.g., 1024 shots) using pseudo-random sampling.
-  - Return normalized simulation payloads matching `docs/QUANTUM_SCHEMA.md`.
-* **Guarantees**:
-  - Deterministic execution of pure quantum states.
-  - Enforces resource limits: max 10 qubits for the MVP to maintain sub-second response times.
+### 3.3. Quantum Simulation Engine
+- **Representation:** Statevector representation of $2^n$ complex probability amplitudes for up to $n=8$ qubits.
+- **Matrix Operators:**
+  - Single-qubit unitaries: Hadamard ($H$), Pauli ($X, Y, Z$), Phase ($S, T$).
+  - Multi-qubit unitaries: Controlled-NOT ($CNOT$) with arbitrary control and target qubit indices, $SWAP$.
+- **Tensor Product Pipeline:** Computes Kronecker products $U = U_1 \otimes U_2 \otimes \dots \otimes U_n$ to construct full operator matrices.
+- **Measurement Engine:** Deterministic probability calculation $|\alpha_i|^2$ and pseudo-random sampling across configurable shot counts (default 1024).
+- **Geometric Visualization:** Extracts single-qubit reduced density matrix expectation values $\langle \sigma_x \rangle, \langle \sigma_y \rangle, \langle \sigma_z \rangle$ for 3D Bloch sphere projections.
 
-### 3.4. AI Grounding & Tutoring Subsystem
-* **Role**: Pedagogical assistant providing contextual explanations, debugging hints, and conceptual clarity.
-* **Fundamental Design Law**:
-  > **The AI MUST NOT be the quantum simulation engine.**
-  > The AI is an explainer and tutor, not a computational simulator. All simulation results fed to the AI must come directly from the verified Quantum Engine output.
-* **Responsibilities**:
-  - Context Builder: Gather active lesson ID, canonical circuit JSON, verified simulation output, user learner level, and past dialogue turns.
-  - System Prompting: Instruct LLM to act strictly as a Socratic quantum physics educator.
-  - Generate guided hints rather than simply giving away challenge solutions.
-  - Guard against hallucination by anchoring discussions to the mathematical outputs provided in the context.
+### 3.4. AI Quantum Tutor
+- **Pedagogical Anchoring:** Grounded strictly in the learner's active circuit gates, exact statevector probabilities, and lesson context.
+- **Hallucination Prevention:** The prompt builder embeds the verified simulator results. If a circuit hasn't been simulated or is stale, the tutor explicitly alerts the user rather than guessing outcomes.
+- **Multi-Provider Resilience:** Supports Google Gemini (`gemini-1.5-flash`), OpenAI (`gpt-4o-mini`), and a deterministic rule-based quantum fallback engine that guarantees uninterrupted tutoring even without internet connectivity or API keys.
 
-### 3.5. Database & Persistence Layer
-* **Role**: Structured storage of user profiles, learning material, user-saved circuits, attempts, and progress records.
-* **Responsibilities**:
-  - Relational integrity, foreign key cascades, and indexing (see `docs/DATABASE.md`).
-  - Fast read access for curriculum lessons and course trees.
-  - Audit trail of quiz submissions and challenge completions for progress tracking.
+### 3.5. Adaptive Intelligence & Mastery Engine
+- **Event Pipeline:** Unified event tracking across lessons, quizzes, simulations, and tutor questions.
+- **Explainable Mastery Formula:**
+  $$\text{Mastery} = 0.40 \times \text{Assessment} + 0.25 \times \text{Lesson} + 0.15 \times \text{Circuit} + 0.10 \times \text{Practice} + 0.10 \times \text{Recency}$$
+- **Mastery Levels:**
+  - Strong: $85 - 100\%$
+  - Proficient: $70 - 84\%$
+  - Developing: $50 - 69\%$
+  - Beginning: $25 - 49\%$
+  - Not Started: $0 - 24\%$
+- **Prerequisite-Aware Recommendations:** Automatically analyzes unmet prerequisites, detected weak areas, and active curriculum modules to suggest targeted next actions.
 
 ---
 
-## 4. Primary Data Flows
+## 4. End-to-End Data Flow
 
-### 4.1. Circuit Simulation Flow
-1. Learner designs circuit on the frontend canvas.
-2. Frontend serializes circuit to Canonical Circuit JSON (`docs/QUANTUM_SCHEMA.md`).
-3. Frontend issues `POST /api/v1/simulate` with circuit JSON and shot count.
-4. Backend `QuantumService` receives request and delegates to `SimulatorEngine`.
-5. `SimulatorEngine` validates circuit integrity, calculates statevector, and samples shots.
-6. Backend returns normalized `SimulationResult` payload.
-7. Frontend Visualizer renders histograms, statevector table, and Bloch sphere angles.
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Learner as Learner / Judge
+    participant UI as Web Frontend
+    participant API as FastAPI Gateway
+    participant Sim as Quantum Simulator
+    participant Tutor as AI Tutor
+    participant Adapt as Adaptive Engine
+    participant DB as Database
 
-### 4.2. Grounded AI Tutoring Flow
-1. Learner asks: *"Why is my measurement output 50% 00 and 50% 11?"*
-2. Frontend submits user query along with the current circuit ID and optional client context.
-3. Backend `ContextBuilder`:
-   - Retrieves canonical circuit representation.
-   - Retrieves verified simulation counts and probabilities from cache or simulator.
-   - Retrieves active lesson title and concept goals.
-   - Retrieves user skill level from profile.
-4. `ContextBuilder` crafts a structured prompt:
-   - System persona: Socratic Quantum Tutor.
-   - Ground truth: Circuit + Verified Simulator counts.
-   - User query.
-5. Backend calls LLM provider API securely using server-side credentials.
-6. LLM response is returned to frontend and rendered in the tutor chat window.
-
-### 4.3. Challenge Evaluation Flow
-1. Learner tackles a challenge (e.g. *"Create a Bell State $|\Phi^+\rangle = \frac{|00\rangle + |11\rangle}{\sqrt{2}}$"*).
-2. Learner constructs circuit and clicks "Submit Challenge".
-3. Backend retrieves target statevector/probabilities for challenge ID.
-4. Backend executes learner's circuit on `SimulatorEngine`.
-5. Backend compares output statevector fidelity or measurement distribution against target criteria with a defined tolerance threshold ($\epsilon \le 10^{-4}$).
-6. If matched, backend marks challenge completed in `Submission` & updates `LessonProgress`.
-7. Success response returned with score and unlock recommendations.
+    Learner->>UI: 1. Click "Quick Demo Sign-In"
+    UI->>API: POST /auth/login (demo@quantumania.org)
+    API->>DB: Query & verify credentials
+    API-->>UI: Return JWT Access Token
+    
+    UI->>API: GET /adaptive/dashboard
+    API->>DB: Fetch user mastery & events
+    API-->>UI: Return progress (10%), streak (3d), recommendations
+    
+    Learner->>UI: 2. Open Quantum Lab & Load Superposition Template
+    UI->>API: POST /quantum/simulate (H gate on q0, shots: 1024)
+    API->>Sim: Run statevector calculation
+    Sim-->>API: Return probabilities (|0>: 50%, |1>: 50%)
+    API->>Adapt: Record CIRCUIT_SIMULATED event
+    Adapt->>DB: Update topic mastery for "superposition"
+    API-->>UI: Render probability bar chart & Bloch sphere
+    
+    Learner->>UI: 3. Ask Tutor: "Explain this result"
+    UI->>API: POST /tutor/query (circuit + simulation context)
+    API->>Tutor: Form grounded prompt with |0>: 50%, |1>: 50%
+    Tutor-->>API: Return pedagogical Born rule explanation
+    API->>Adapt: Record TUTOR_QUESTION event
+    API-->>UI: Display formatted Markdown explanation
+    
+    Learner->>UI: 4. Complete Concept Quiz in Practice Arena
+    UI->>API: POST /adaptive/assessment (is_correct: true)
+    API->>Adapt: Recalculate topic mastery
+    Adapt->>DB: Persist updated score & confidence
+    API-->>UI: Return updated mastery & XP
+```
 
 ---
 
-## 5. Security & Reliability Principles
-
-1. **No Client-Side Secrets**: External AI keys, database credentials, and JWT signing keys are strictly confined to the backend environment (`.env`).
-2. **Deterministic Quantum Validation**: All circuit inputs undergo schema validation (target qubit index within qubit range, controls distinct from targets, valid gate names) before reaching the linear algebra simulator.
-3. **Graceful Degradation**: If the external AI service experiences downtime or latency, circuit simulation, curriculum reading, and automated grading continue operating without interruption.
-4. **State Machine Integrity**: User progress updates are idempotent and protected by atomic transactions.
+## 5. Security & Isolation Matrix
+| Subsystem | Security Mechanism | Validation |
+| :--- | :--- | :--- |
+| **Authentication** | Passlib bcrypt (12 rounds) + JWT (HS256) | Strict password complexity $\ge 8$ chars |
+| **Route Authorization** | `get_current_user` FastAPI dependency | Unauthenticated requests receive HTTP 401 |
+| **Data Isolation** | Foreign key filtering (`user_id == current_user.id`) | Users cannot read or modify other users' progress |
+| **Circuit Validation** | Pydantic schema validation | Max 8 qubits, depth $\le 100$, no gate collisions |
+| **AI Prompt Injection** | Structured JSON context embedding | User prompt isolated in delimited message block |
+| **Secrets Protection** | `.env` variables excluded from git | Zero credentials in client bundles or public repositories |
