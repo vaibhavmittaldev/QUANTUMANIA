@@ -16,6 +16,7 @@ import { PlaceholderModule } from './features/placeholders/PlaceholderModule';
 import { CoursePage } from './features/learning/CoursePage';
 import { ModulePage } from './features/learning/ModulePage';
 import { LessonPage } from './features/learning/LessonPage';
+import { QuantumLabPage } from './features/circuit/QuantumLabPage';
 
 const NotFoundPage: React.FC = () => (
   <div
@@ -81,7 +82,7 @@ export const App: React.FC = () => {
             <Route path="learn" element={<CoursePage />} />
             <Route path="learn/modules/:moduleId" element={<ModulePage />} />
             <Route path="learn/lessons/:lessonId" element={<LessonPage />} />
-            <Route path="quantum-lab" element={<PlaceholderModule moduleId="quantum-lab" />} />
+            <Route path="quantum-lab" element={<QuantumLabPage />} />
             <Route path="practice" element={<PlaceholderModule moduleId="practice" />} />
             <Route path="progress" element={<PlaceholderModule moduleId="progress" />} />
             <Route path="profile" element={<ProfilePage />} />
