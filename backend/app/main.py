@@ -4,13 +4,22 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from app.core.config import settings
 from app.core.exceptions import AppException
-from app.db.base import Base, engine
+from app.db.base import Base, engine, SessionLocal
 from app.db.models.user import User, Profile
+from app.db.models.learning import Course, Module, Lesson, LessonProgress
+from app.services.learning_service import LearningService
 from app.api.v1.router import api_v1_router
 from app.schemas.common import StandardErrorResponse, ErrorDetail
 
 # Initialize tables
 Base.metadata.create_all(bind=engine)
+
+# Seed canonical curriculum
+_db = SessionLocal()
+try:
+    LearningService.seed_curriculum_if_needed(_db)
+finally:
+    _db.close()
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -97,7 +106,7 @@ async def generic_exception_handler(request: Request, exc: Exception):
 
 # Routes
 app.include_router(api_v1_router, prefix="/api/v1")
-app.include_router(api_v1_router)  # Direct /auth/register, /auth/login, /me support
+app.include_router(api_v1_router)  # Direct /auth/register, /courses, /lessons support
 
 @app.get("/health", tags=["Health"])
 @app.get("/api/health", tags=["Health"])

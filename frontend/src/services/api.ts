@@ -1,4 +1,17 @@
 import { ApiResponse, AuthTokenData, UserProfile } from '../types/auth';
+import {
+  CourseSummary,
+  CourseDetail,
+  ModuleSummary,
+  LessonDetail,
+  LessonCompleteResponse,
+  LearningProgressSummary
+} from '../types/learning';
+import {
+  CanonicalCircuit,
+  CircuitValidationResult,
+  CircuitTemplate
+} from '../types/circuit';
 
 const TOKEN_KEY = 'quantumania_auth_token';
 
@@ -116,6 +129,71 @@ export const authApi = {
     return request<UserProfile>('/me', {
       method: 'PUT',
       body: JSON.stringify(payload)
+    });
+  }
+};
+
+export const learningApi = {
+  getCourses: () => {
+    return request<CourseSummary[]>('/courses', {
+      method: 'GET'
+    });
+  },
+
+  getCourse: (courseId: string) => {
+    return request<CourseDetail>(`/courses/${courseId}`, {
+      method: 'GET'
+    });
+  },
+
+  getModule: (moduleId: string) => {
+    return request<ModuleSummary>(`/modules/${moduleId}`, {
+      method: 'GET'
+    });
+  },
+
+  getLesson: (lessonId: string) => {
+    return request<LessonDetail>(`/lessons/${lessonId}`, {
+      method: 'GET'
+    });
+  },
+
+  startLesson: (lessonId: string) => {
+    return request<{ lesson_id: string; status: string }>(`/lessons/${lessonId}/start`, {
+      method: 'POST'
+    });
+  },
+
+  completeLesson: (lessonId: string) => {
+    return request<LessonCompleteResponse>(`/lessons/${lessonId}/complete`, {
+      method: 'POST'
+    });
+  },
+
+  getProgress: () => {
+    return request<LearningProgressSummary>('/learning/progress', {
+      method: 'GET'
+    });
+  }
+};
+
+export const quantumApi = {
+  validateCircuit: (circuit: CanonicalCircuit) => {
+    return request<CircuitValidationResult>('/quantum/validate', {
+      method: 'POST',
+      body: JSON.stringify(circuit)
+    });
+  },
+
+  getTemplates: () => {
+    return request<CircuitTemplate[]>('/quantum/templates', {
+      method: 'GET'
+    });
+  },
+
+  getTemplate: (templateId: string) => {
+    return request<CircuitTemplate>(`/quantum/templates/${templateId}`, {
+      method: 'GET'
     });
   }
 };
