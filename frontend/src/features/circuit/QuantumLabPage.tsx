@@ -13,7 +13,10 @@ import { CircuitInspector } from './components/CircuitInspector';
 import { CircuitCodeModal } from './components/CircuitCodeModal';
 import { ResetConfirmModal } from './components/ResetConfirmModal';
 import { CircuitHelpModal } from './components/CircuitHelpModal';
+import { SimulationResultsPanel } from './components/SimulationResultsPanel';
 import { CIRCUIT_TEMPLATES } from './domain/circuitTemplates';
+import { simulateCircuit } from './simulator/quantumSimulator';
+import { SimulationResult } from '../../types/circuit';
 import {
   Undo2,
   Redo2,
@@ -23,8 +26,10 @@ import {
   Bookmark,
   CheckCircle2,
   AlertTriangle,
-  Info
+  Info,
+  Loader2
 } from 'lucide-react';
+
 
 const QuantumLabInner: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -46,6 +51,19 @@ const QuantumLabInner: React.FC = () => {
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
+
+  // Phase 4: Quantum Simulation State
+  const [simulationResult, setSimulationResult] = useState<SimulationResult | null>(null);
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [shots, setShots] = useState(1024);
+  const [lastSimulatedSignature, setLastSimulatedSignature] = useState<string | null>(null);
+
+  // Detect stale results when circuit is modified
+  const currentCircuitSignature = JSON.stringify(circuit.gates);
+  const isStale =
+    simulationResult !== null &&
+    lastSimulatedSignature !== null &&
+    lastSimulatedSignature !== currentCircuitSignature;
 
   // Handle deep-link query parameter from Phase 2 Lessons (e.g. ?template=bell-state)
   useEffect(() => {
@@ -78,8 +96,57 @@ const QuantumLabInner: React.FC = () => {
 
   const handleConfirmReset = () => {
     resetCircuit();
+    setSimulationResult(null);
+    setLastSimulatedSignature(null);
     setIsResetModalOpen(false);
   };
+
+  const handleRunSimulation = () => {
+    if (!validation.is_valid) {
+      setFeedbackMessage({
+        type: 'error',
+        text: validation.errors[0]?.message || 'Cannot run circuit. Please fix validation errors.'
+      });
+      return;
+    }
+
+    setIsSimulating(true);
+    try {
+      const result = simulateCircuit(circuit, { shots });
+      setSimulationResult(result);
+      setLastSimulatedSignature(JSON.stringify(circuit.gates));
+
+      if (result.success) {
+        setFeedbackMessage({
+          type: 'success',
+          text: `Simulation complete: ${result.shots} shots in ${result.execution_time_ms} ms`
+        });
+      } else {
+        setFeedbackMessage({
+          type: 'error',
+          text: result.error || 'Simulation failed.'
+        });
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unexpected simulation failure.';
+      setFeedbackMessage({
+        type: 'error',
+        text: message
+      });
+    } finally {
+      setIsSimulating(false);
+    }
+  };
+
+  const handleClearResults = () => {
+    setSimulationResult(null);
+    setLastSimulatedSignature(null);
+    setFeedbackMessage({
+      type: 'info',
+      text: 'Simulation results cleared.'
+    });
+  };
+
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', minHeight: 'calc(100vh - 120px)' }}>
@@ -215,27 +282,67 @@ const QuantumLabInner: React.FC = () => {
             <span>Circuit JSON</span>
           </button>
 
-          {/* Phase 4 Execution Handoff Button (Disabled with honest educational tooltip) */}
-          <div
-            title="Quantum simulation engine will be available in Phase 4 (Tanishq track). Circuit is currently validated and ready for simulation."
-            style={{ display: 'inline-block' }}
-          >
-            <button
-              type="button"
-              disabled
-              className="btn btn-primary"
+          {/* Shots Selector */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginLeft: '0.25rem' }}>
+            <label htmlFor="shots-select" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+              Shots:
+            </label>
+            <select
+              id="shots-select"
+              aria-label="Simulation measurement shots"
+              value={shots}
+              onChange={(e) => setShots(Number(e.target.value))}
               style={{
-                opacity: 0.6,
-                cursor: 'not-allowed',
-                padding: '0.4rem 0.9rem',
-                fontSize: '0.85rem'
+                backgroundColor: 'var(--bg-elevated)',
+                border: '1px solid var(--border-medium)',
+                borderRadius: 'var(--radius-sm)',
+                color: 'var(--text-primary)',
+                fontSize: '0.8rem',
+                padding: '0.35rem 0.5rem',
+                cursor: 'pointer'
               }}
             >
-              <Play size={15} />
-              <span>Simulate (Phase 4)</span>
-            </button>
+              <option value={10}>10</option>
+              <option value={100}>100</option>
+              <option value={1000}>1,000</option>
+              <option value={1024}>1,024</option>
+              <option value={4096}>4,096</option>
+            </select>
           </div>
+
+          {/* Active Phase 4 Run Circuit Button */}
+          <button
+            type="button"
+            onClick={handleRunSimulation}
+            disabled={isSimulating}
+            className="btn btn-primary"
+            title="Execute state-vector quantum simulation"
+            aria-label="Run Quantum Circuit Simulation"
+            style={{
+              padding: '0.45rem 1.05rem',
+              fontSize: '0.85rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+              boxShadow: '0 4px 14px rgba(79, 70, 229, 0.4)',
+              cursor: isSimulating ? 'wait' : 'pointer'
+            }}
+          >
+            {isSimulating ? (
+              <>
+                <Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} />
+                <span>Simulating...</span>
+              </>
+            ) : (
+              <>
+                <Play size={15} fill="currentColor" />
+                <span>Run Circuit</span>
+              </>
+            )}
+          </button>
         </div>
+
       </div>
 
       {/* Ephemeral Feedback Toast */}
@@ -307,8 +414,17 @@ const QuantumLabInner: React.FC = () => {
         </div>
       </div>
 
+      {/* Phase 4: Classical Quantum Simulation Results */}
+      <SimulationResultsPanel
+        result={simulationResult}
+        isStale={isStale}
+        onClear={handleClearResults}
+        onRerun={handleRunSimulation}
+      />
+
       {/* Modals */}
       <CircuitCodeModal
+
         isOpen={isCodeModalOpen}
         onClose={() => setIsCodeModalOpen(false)}
       />
