@@ -5,6 +5,7 @@
  */
 
 import { CanonicalCircuit } from './circuit';
+import { LearnerContext } from './adaptive';
 
 
 export type TutorMode = 'explain' | 'hint' | 'ask' | 'guide' | 'analyze';
@@ -54,6 +55,7 @@ export interface TutorRequest {
   lesson_context?: LessonContext;
   circuit_context?: CircuitContext;
   simulation_context?: SimulationContext;
+  learner_context?: LearnerContext;
   conversation?: Array<{ role: TutorRole; content: string }>;
 }
 

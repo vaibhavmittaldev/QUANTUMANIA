@@ -18,6 +18,15 @@ import {
   TutorResponse,
   TutorStatus
 } from '../types/tutor';
+import {
+  LearningEventCreate,
+  LearningEvent,
+  TopicMastery,
+  Recommendation,
+  LearnerDashboardData,
+  LearnerContext,
+  AssessmentSubmission
+} from '../types/adaptive';
 
 
 
@@ -223,6 +232,47 @@ export const tutorApi = {
 
   getStatus: () => {
     return request<TutorStatus>('/tutor/status', {
+      method: 'GET'
+    });
+  }
+};
+
+export const adaptiveApi = {
+  trackEvent: (payload: LearningEventCreate) => {
+    return request<LearningEvent>('/adaptive/events', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  },
+
+  getDashboard: () => {
+    return request<LearnerDashboardData>('/adaptive/dashboard', {
+      method: 'GET'
+    });
+  },
+
+  getMastery: () => {
+    return request<TopicMastery[]>('/adaptive/mastery', {
+      method: 'GET'
+    });
+  },
+
+  getRecommendations: () => {
+    return request<Recommendation[]>('/adaptive/recommendations', {
+      method: 'GET'
+    });
+  },
+
+  submitAssessment: (payload: AssessmentSubmission) => {
+    return request<TopicMastery>('/adaptive/assessment', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  },
+
+  getLearnerContext: (lessonId?: string) => {
+    const url = lessonId ? `/adaptive/context?lesson_id=${encodeURIComponent(lessonId)}` : '/adaptive/context';
+    return request<LearnerContext>(url, {
       method: 'GET'
     });
   }

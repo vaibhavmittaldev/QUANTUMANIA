@@ -582,9 +582,17 @@ export const TutorPanel: React.FC<TutorPanelProps> = ({
                     )}
                   </div>
 
-                  <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', padding: '0 0.2rem' }}>
-                    {msg.timestamp}
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 0.2rem' }}>
+                    <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+                      {msg.timestamp}
+                    </span>
+                    {msg.contextUsed?.learner_context_applied && (
+                      <span style={{ fontSize: '0.68rem', color: 'var(--accent-cyan)', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
+                        <Sparkles size={11} />
+                        <span>Adaptive Grounding</span>
+                      </span>
+                    )}
+                  </div>
                 </div>
               );
             })}

@@ -42,15 +42,69 @@ class DeterministicTutorProvider(BaseAIProvider):
 
         # Dispatch based on Mode
         if mode == TutorMode.EXPLAIN:
-            return self._handle_explain(circ, sim, gates_list, is_bell, is_stale, has_sim, metadata)
+            res = self._handle_explain(circ, sim, gates_list, is_bell, is_stale, has_sim, metadata)
         elif mode == TutorMode.HINT:
-            return self._handle_hint(request.hint_level or 1, circ, sim, gates_list, is_bell, metadata)
+            res = self._handle_hint(request.hint_level or 1, circ, sim, gates_list, is_bell, metadata)
         elif mode == TutorMode.ANALYZE:
-            return self._handle_analyze(circ, sim, gates_list, is_bell, is_stale, has_sim, metadata)
+            res = self._handle_analyze(circ, sim, gates_list, is_bell, is_stale, has_sim, metadata)
         elif mode == TutorMode.GUIDE:
-            return self._handle_guide(circ, sim, gates_list, is_bell, metadata)
+            res = self._handle_guide(circ, sim, gates_list, is_bell, metadata)
         else: # TutorMode.ASK
-            return self._handle_ask(msg, circ, sim, gates_list, is_bell, is_stale, has_sim, metadata)
+            res = self._handle_ask(msg, circ, sim, gates_list, is_bell, is_stale, has_sim, metadata, raw_msg=(request.message or ""))
+
+        # Adapt response with Phase 6 Learner Context
+        if request.learner_context:
+            res = self._apply_learner_context_adaptation(res, request.learner_context, gates_list)
+
+        return res
+
+    def _apply_learner_context_adaptation(
+        self,
+        response: TutorResponse,
+        lc: Any,
+        gates_list: List[str]
+    ) -> TutorResponse:
+        """Enriches tutor responses using authentic learner intelligence."""
+        weak_topics = lc.weak_topics or []
+        strengths = lc.strengths or []
+        adaptation_notes = []
+
+        # Topic relevance mapping
+        is_h_present = "H" in gates_list
+        is_cx_present = "CNOT" in gates_list or "CX" in gates_list
+
+        if "superposition" in weak_topics and is_h_present:
+            adaptation_notes.append(
+                "> 💡 **Adaptive Learning Guidance**: Since you are reinforcing your understanding of **Superposition**, note how the Hadamard gate maps computational basis $|0\\rangle$ into an equal superposition $\\frac{1}{\\sqrt{2}}(|0\\rangle + |1\\rangle)$."
+            )
+        elif "cnot_gate" in weak_topics and is_cx_present:
+            adaptation_notes.append(
+                "> 💡 **Adaptive Learning Guidance**: Since you are practicing **CNOT operations**, remember the conditional parity rule: target flips only when control qubit is $|1\\rangle$."
+            )
+        elif "entanglement" in weak_topics and (is_h_present and is_cx_present):
+            adaptation_notes.append(
+                "> 💡 **Adaptive Learning Guidance**: To strengthen your grasp on **Entanglement**, verify that measuring qubit 0 immediately determines qubit 1's state."
+            )
+        elif strengths and not adaptation_notes:
+            primary_strength = strengths[0].replace("_", " ").title()
+            adaptation_notes.append(
+                f"> 🎓 **Mastery Grounding**: Building upon your verified proficiency in **{primary_strength}**, you can explore how these state transformations scale to multi-qubit registers."
+            )
+
+        if adaptation_notes:
+            response.message = f"{adaptation_notes[0]}\n\n{response.message}"
+
+        # Align next step with recommendation if available
+        if lc.recommended_next and len(lc.recommended_next) > 0 and not response.next_step:
+            top_rec = lc.recommended_next[0]
+            response.next_step = f"Recommended Next Action: {top_rec.title} ({top_rec.reason})"
+
+        response.context_used["learner_context_applied"] = True
+        response.context_used["learner_overall_progress"] = lc.overall_progress
+        if weak_topics:
+            response.context_used["addressed_weaknesses"] = weak_topics[:3]
+
+        return response
 
     def _handle_explain(
         self,
@@ -331,7 +385,8 @@ class DeterministicTutorProvider(BaseAIProvider):
         is_bell: bool,
         is_stale: bool,
         has_sim: bool,
-        metadata: Dict[str, Any]
+        metadata: Dict[str, Any],
+        raw_msg: str = ""
     ) -> TutorResponse:
         # Question about why not simulated or missing simulation result (Section 27)
         if ("why" in msg or "what" in msg) and "result" in msg and not has_sim:
@@ -424,7 +479,7 @@ class DeterministicTutorProvider(BaseAIProvider):
             mode=TutorMode.ASK,
             message=(
                 f"### AI Quantum Tutor\n\n"
-                f"Regarding your question: *\"{request.message}\"*\n\n"
+                f"Regarding your question: *\"{raw_msg}\"*\n\n"
                 "In your current circuit workspace:\n"
                 f"- **Allocated Qubits:** {circ.qubits if circ else 1}\n"
                 f"- **Operations:** {', '.join(gates_list) if gates_list else 'Empty canvas'}\n"
