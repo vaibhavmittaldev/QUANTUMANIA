@@ -11,9 +11,15 @@ from app.schemas.circuit import (
     CircuitValidationResponse,
     CircuitTemplateSummary
 )
+from app.schemas.simulation import (
+    SimulationRequest,
+    SimulationResultSchema
+)
 from app.services.circuit_service import CircuitService
+from app.services.simulation_service import SimulationService
 
 router = APIRouter(prefix="/quantum", tags=["quantum"])
+
 
 
 @router.post(
@@ -52,3 +58,20 @@ def get_template(template_id: str):
             detail=f"Circuit template '{template_id}' not found."
         )
     return StandardSuccessResponse(success=True, data=template)
+
+
+@router.post(
+    "/simulate",
+    response_model=StandardSuccessResponse[SimulationResultSchema],
+    status_code=status.HTTP_200_OK,
+    summary="Simulate canonical quantum circuit with exact statevector and measurement sampling"
+)
+def simulate_circuit(payload: SimulationRequest):
+    result = SimulationService.simulate(payload.circuit, shots=payload.shots)
+    if not result.success:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=result.error or "Simulation failed."
+        )
+    return StandardSuccessResponse(success=True, data=result)
+
