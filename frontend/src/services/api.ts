@@ -10,8 +10,10 @@ import {
 import {
   CanonicalCircuit,
   CircuitValidationResult,
-  CircuitTemplate
+  CircuitTemplate,
+  SimulationResult
 } from '../types/circuit';
+
 
 const TOKEN_KEY = 'quantumania_auth_token';
 
@@ -195,5 +197,13 @@ export const quantumApi = {
     return request<CircuitTemplate>(`/quantum/templates/${templateId}`, {
       method: 'GET'
     });
+  },
+
+  simulateCircuit: (circuit: CanonicalCircuit, shots = 1024) => {
+    return request<SimulationResult>('/quantum/simulate', {
+      method: 'POST',
+      body: JSON.stringify({ circuit, shots })
+    });
   }
 };
+
