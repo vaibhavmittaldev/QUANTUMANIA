@@ -7,6 +7,7 @@ from app.core.exceptions import AppException
 from app.db.base import Base, engine, SessionLocal
 from app.db.models.user import User, Profile
 from app.db.models.learning import Course, Module, Lesson, LessonProgress
+from app.db.models.adaptive import LearningEventModel, TopicMasteryModel
 from app.services.learning_service import LearningService
 from app.api.v1.router import api_v1_router
 from app.schemas.common import StandardErrorResponse, ErrorDetail

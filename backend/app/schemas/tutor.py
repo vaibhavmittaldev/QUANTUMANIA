@@ -8,6 +8,7 @@ from enum import Enum
 from typing import List, Dict, Optional, Literal, Any
 from pydantic import BaseModel, Field
 from app.schemas.circuit import CanonicalCircuitSchema
+from app.schemas.adaptive import LearnerContextSchema
 
 
 class TutorMode(str, Enum):
@@ -63,6 +64,7 @@ class TutorRequest(BaseModel):
     lesson_context: Optional[LessonContextSchema] = None
     circuit_context: Optional[CircuitContextSchema] = None
     simulation_context: Optional[SimulationContextSchema] = None
+    learner_context: Optional[LearnerContextSchema] = None
     conversation: Optional[List[TutorMessageSchema]] = Field(default_factory=list)
 
 

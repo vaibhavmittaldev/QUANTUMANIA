@@ -113,7 +113,37 @@ class ContextBuilder:
 
             sections.append("\n".join(sim_text))
 
-        # 4. Mode-Specific Directive
+        # 4. Phase 6 Learner Model Context
+        if request.learner_context:
+            lc = request.learner_context
+            metadata["has_learner_context"] = True
+            metadata["overall_progress"] = lc.overall_progress
+            metadata["weak_topics"] = lc.weak_topics or []
+            metadata["strengths"] = lc.strengths or []
+
+            lc_text = ["### PHASE 6 LEARNER MODEL & ADAPTIVE INTELLIGENCE:"]
+            lc_text.append(f"- Curriculum Progress: {lc.overall_progress}% completed")
+            if lc.current_topic:
+                lc_text.append(f"- Active Topic Focus: {lc.current_topic}")
+            if lc.strengths:
+                lc_text.append(f"- Demonstrated Strengths: {', '.join(lc.strengths)}")
+            if lc.weak_topics:
+                lc_text.append(f"- Topics Needing Reinforcement: {', '.join(lc.weak_topics)}")
+            if lc.topic_mastery:
+                mastery_strs = [f"{tm.topic_title}: {tm.score}% ({tm.level})" for tm in lc.topic_mastery[:5]]
+                lc_text.append(f"- Key Topic Masteries: {'; '.join(mastery_strs)}")
+            if lc.recommended_next:
+                rec_titles = [f"'{r.title}'" for r in lc.recommended_next[:2]]
+                lc_text.append(f"- Recommended Next Actions: {', '.join(rec_titles)}")
+
+            lc_text.append(
+                "- Pedagogical Directives: Adapt explanations to the learner's verified mastery level. "
+                "If the learner is weak in foundational concepts (e.g. Superposition or Qubits), prioritize gentle, intuitive explanations with analogies. "
+                "If they have strong mastery, provide advanced insights and deeper mathematical formalism."
+            )
+            sections.append("\n".join(lc_text))
+
+        # 5. Mode-Specific Directive
         mode = request.mode
         mode_directives = {
             TutorMode.EXPLAIN: "Provide a comprehensive pedagogical breakdown of this quantum circuit and state transformations.",
@@ -124,7 +154,7 @@ class ContextBuilder:
         }
         sections.append(f"### TUTOR MODE DIRECTIVE ({mode.value.upper()}):\n{mode_directives.get(mode, 'Assist the learner with quantum computing.')}")
 
-        # 5. User Message
+        # 6. User Message
         if request.message:
             sections.append(f"### LEARNER QUESTION / INPUT:\n\"{request.message.strip()}\"")
 

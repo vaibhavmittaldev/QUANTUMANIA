@@ -322,6 +322,21 @@ class LearningService:
             db.add(progress)
             db.commit()
 
+        # Phase 6: Learning Event Tracking
+        try:
+            from app.services.adaptive.event_service import EventService
+            from app.schemas.adaptive import LearningEventCreate, LearningEventType
+            EventService.record_event(
+                db,
+                user,
+                LearningEventCreate(
+                    event_type=LearningEventType.LESSON_STARTED,
+                    lesson_id=lesson_id
+                )
+            )
+        except Exception:
+            pass
+
     @staticmethod
     def complete_lesson(db: Session, user: User, lesson_id: str) -> LessonCompleteResponse:
         lesson = db.query(Lesson).filter(Lesson.id == lesson_id).first()
@@ -357,6 +372,22 @@ class LearningService:
             user.profile.total_xp += xp_awarded
 
         db.commit()
+
+        # Phase 6: Learning Event Tracking & Topic Mastery Update
+        try:
+            from app.services.adaptive.event_service import EventService
+            from app.schemas.adaptive import LearningEventCreate, LearningEventType
+            EventService.record_event(
+                db,
+                user,
+                LearningEventCreate(
+                    event_type=LearningEventType.LESSON_COMPLETED,
+                    lesson_id=lesson_id,
+                    metadata={"xp_awarded": xp_awarded}
+                )
+            )
+        except Exception:
+            pass
 
         # Find next lesson in sequence
         all_lessons = db.query(Lesson).join(Module).filter(
