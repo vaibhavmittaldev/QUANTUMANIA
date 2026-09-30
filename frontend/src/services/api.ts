@@ -7,6 +7,11 @@ import {
   LessonCompleteResponse,
   LearningProgressSummary
 } from '../types/learning';
+import {
+  CanonicalCircuit,
+  CircuitValidationResult,
+  CircuitTemplate
+} from '../types/circuit';
 
 const TOKEN_KEY = 'quantumania_auth_token';
 
@@ -167,6 +172,27 @@ export const learningApi = {
 
   getProgress: () => {
     return request<LearningProgressSummary>('/learning/progress', {
+      method: 'GET'
+    });
+  }
+};
+
+export const quantumApi = {
+  validateCircuit: (circuit: CanonicalCircuit) => {
+    return request<CircuitValidationResult>('/quantum/validate', {
+      method: 'POST',
+      body: JSON.stringify(circuit)
+    });
+  },
+
+  getTemplates: () => {
+    return request<CircuitTemplate[]>('/quantum/templates', {
+      method: 'GET'
+    });
+  },
+
+  getTemplate: (templateId: string) => {
+    return request<CircuitTemplate>(`/quantum/templates/${templateId}`, {
       method: 'GET'
     });
   }
