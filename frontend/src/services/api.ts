@@ -13,6 +13,12 @@ import {
   CircuitTemplate,
   SimulationResult
 } from '../types/circuit';
+import {
+  TutorRequest,
+  TutorResponse,
+  TutorStatus
+} from '../types/tutor';
+
 
 
 const TOKEN_KEY = 'quantumania_auth_token';
@@ -206,4 +212,20 @@ export const quantumApi = {
     });
   }
 };
+
+export const tutorApi = {
+  query: (payload: TutorRequest) => {
+    return request<TutorResponse>('/tutor/query', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  },
+
+  getStatus: () => {
+    return request<TutorStatus>('/tutor/status', {
+      method: 'GET'
+    });
+  }
+};
+
 
