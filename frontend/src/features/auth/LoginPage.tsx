@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { ApiError } from '../../services/api';
 import { AlertBanner } from '../../components/common/FeedbackStates';
-import { Atom, Eye, EyeOff, LogIn, Loader2 } from 'lucide-react';
+import { Atom, Eye, EyeOff, LogIn, Loader2, Sparkles } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -189,6 +189,64 @@ export const LoginPage: React.FC = () => {
               </>
             )}
           </button>
+
+          {/* SIH Demo 1-Click Login */}
+          <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                margin: '1rem 0',
+                color: 'var(--text-muted)',
+                fontSize: '0.75rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em'
+              }}
+            >
+              <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--border-subtle)' }} />
+              <span>Or Evaluation Demo</span>
+              <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--border-subtle)' }} />
+            </div>
+
+            <button
+              type="button"
+              onClick={async () => {
+                setEmail('demo@quantumania.org');
+                setPassword('DemoPass123!');
+                setIsSubmitting(true);
+                setError(null);
+                try {
+                  await login('demo@quantumania.org', 'DemoPass123!');
+                  navigate(from, { replace: true });
+                } catch (err) {
+                  setError(err instanceof Error ? err.message : 'Demo sign in failed.');
+                } finally {
+                  setIsSubmitting(false);
+                }
+              }}
+              disabled={isSubmitting}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                borderRadius: 'var(--radius-md)',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
+                color: '#34d399',
+                fontWeight: 600,
+                fontSize: '0.9rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                cursor: 'pointer',
+                transition: 'all var(--transition-fast)'
+              }}
+            >
+              <Sparkles size={16} />
+              <span>Quick Demo Sign-In (Evaluator Mode)</span>
+            </button>
+          </div>
         </form>
 
         <div

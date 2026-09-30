@@ -29,29 +29,25 @@ export const MAIN_NAV_ITEMS: NavItem[] = [
     id: 'learn',
     label: 'Learn',
     path: '/app/learn',
-    icon: GraduationCap,
-    phaseTag: 'Phase 2'
+    icon: GraduationCap
   },
   {
     id: 'quantum-lab',
     label: 'Quantum Lab',
     path: '/app/quantum-lab',
-    icon: Cpu,
-    phaseTag: 'Phase 3-5'
+    icon: Cpu
   },
   {
     id: 'practice',
     label: 'Practice',
     path: '/app/practice',
-    icon: Trophy,
-    phaseTag: 'Phase 6'
+    icon: Trophy
   },
   {
     id: 'progress',
     label: 'Progress',
     path: '/app/progress',
-    icon: BarChart3,
-    phaseTag: 'Phase 6'
+    icon: BarChart3
   }
 ];
 
