@@ -3,12 +3,12 @@
  * Phase 3: Quantum Circuit Builder
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { useCircuit } from '../context/CircuitContext';
 import { GateCell } from './GateCell';
 import { Plus, Minus } from 'lucide-react';
 import { MIN_QUBITS, MAX_QUBITS } from '../domain/circuitDomain';
-import { QuantumGate } from '../../../types/circuit';
+import { QuantumGate, GateType } from '../../../types/circuit';
 
 const CELL_WIDTH = 56;
 const ROW_HEIGHT = 68;
@@ -20,9 +20,38 @@ export const CircuitWorkspace: React.FC = () => {
     selectedGateId,
     selectGate,
     placeGateAt,
+    moveGate,
+    deleteSelectedGate,
     activeTool,
-    setQubits
+    setQubits,
+    hoveredCell,
+    setHoveredCell,
+    highlightedGateId
   } = useCircuit();
+
+  // Keyboard shortcut: Delete or Backspace removes selected gate
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable ||
+          target.closest('.monaco-editor'))
+      ) {
+        return;
+      }
+
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedGateId) {
+        e.preventDefault();
+        deleteSelectedGate();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedGateId, deleteSelectedGate]);
 
   // Determine total visible columns (at least 8, auto-expanding)
   const totalColumns = useMemo(() => {
@@ -71,6 +100,34 @@ export const CircuitWorkspace: React.FC = () => {
       selectGate(existing.id);
     } else {
       placeGateAt(step, qubit);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  };
+
+  const handleDragEnter = (step: number, qubit: number) => {
+    setHoveredCell({ step, qubit });
+  };
+
+  const handleDragLeave = (step: number, qubit: number) => {
+    if (hoveredCell?.step === step && hoveredCell?.qubit === qubit) {
+      setHoveredCell(null);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent, step: number, qubit: number) => {
+    e.preventDefault();
+    setHoveredCell(null);
+    const moveGateId = e.dataTransfer.getData('application/quantum-move');
+    const gateType = e.dataTransfer.getData('application/quantum-gate') as GateType | '';
+
+    if (moveGateId) {
+      moveGate(moveGateId, step, qubit);
+    } else if (gateType) {
+      placeGateAt(step, qubit, undefined, gateType);
     }
   };
 
@@ -326,11 +383,17 @@ export const CircuitWorkspace: React.FC = () => {
                 {Array.from({ length: totalColumns }).map((_, stepIdx) => {
                   const gate = cellGateMap.get(`${stepIdx}:${qIdx}`);
                   const isSelected = gate ? selectedGateId === gate.id : false;
+                  const isHighlighted = gate ? highlightedGateId === gate.id : false;
+                  const isHovered = hoveredCell?.step === stepIdx && hoveredCell?.qubit === qIdx;
 
                   return (
                     <div
                       key={`cell-${stepIdx}-${qIdx}`}
                       onClick={() => handleCellClick(stepIdx, qIdx)}
+                      onDragOver={handleDragOver}
+                      onDragEnter={() => handleDragEnter(stepIdx, qIdx)}
+                      onDragLeave={() => handleDragLeave(stepIdx, qIdx)}
+                      onDrop={(e) => handleDrop(e, stepIdx, qIdx)}
                       style={{
                         width: `${CELL_WIDTH}px`,
                         height: `${ROW_HEIGHT}px`,
@@ -338,7 +401,9 @@ export const CircuitWorkspace: React.FC = () => {
                         alignItems: 'center',
                         justifyContent: 'center',
                         cursor: 'pointer',
-                        position: 'relative'
+                        position: 'relative',
+                        backgroundColor: isHovered ? 'rgba(6, 182, 212, 0.08)' : 'transparent',
+                        transition: 'background-color 0.15s ease'
                       }}
                     >
                       {gate ? (
@@ -346,22 +411,45 @@ export const CircuitWorkspace: React.FC = () => {
                           gate={gate}
                           qubitIndex={qIdx}
                           isSelected={isSelected}
+                          isHighlighted={isHighlighted}
                           onSelect={() => selectGate(gate.id)}
                         />
                       ) : (
                         <div
                           className="circuit-empty-slot"
                           style={{
-                            width: '24px',
-                            height: '24px',
-                            borderRadius: '4px',
-                            border: '1px dashed transparent',
+                            width: isHovered ? '32px' : '24px',
+                            height: isHovered ? '32px' : '24px',
+                            borderRadius: '6px',
+                            border: isHovered
+                              ? '2px dashed var(--accent-cyan)'
+                              : '1px dashed rgba(255, 255, 255, 0.18)',
+                            backgroundColor: isHovered
+                              ? 'rgba(6, 182, 212, 0.22)'
+                              : 'transparent',
+                            boxShadow: isHovered
+                              ? '0 0 12px rgba(6, 182, 212, 0.45)'
+                              : 'none',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
+                            transform: isHovered ? 'scale(1.15)' : 'none',
                             transition: 'all 0.15s ease'
                           }}
-                        />
+                        >
+                          {isHovered && (
+                            <span
+                              style={{
+                                fontSize: '0.85rem',
+                                color: 'var(--accent-cyan)',
+                                fontWeight: 800,
+                                lineHeight: 1
+                              }}
+                            >
+                              +
+                            </span>
+                          )}
+                        </div>
                       )}
                     </div>
                   );

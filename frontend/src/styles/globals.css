@@ -285,3 +285,81 @@ input, select, textarea {
 .animate-fade-in {
   animation: fadeIn 0.3s ease-out forwards;
 }
+
+/* Quantum Lab Responsive Workspace */
+.quantum-lab-split-grid {
+  display: grid;
+  grid-template-columns: minmax(220px, 260px) minmax(420px, 1.25fr) minmax(380px, 1.15fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+@media (max-width: 1280px) {
+  .quantum-lab-split-grid {
+    grid-template-columns: minmax(220px, 260px) 1fr;
+  }
+  .quantum-lab-split-grid > :nth-child(3) {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 860px) {
+  .quantum-lab-split-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.quantum-lab-canvas-grid {
+  display: grid;
+  grid-template-columns: minmax(220px, 260px) minmax(480px, 1fr) minmax(240px, 310px);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .quantum-lab-canvas-grid {
+    grid-template-columns: minmax(220px, 260px) 1fr;
+  }
+  .quantum-lab-canvas-grid > :nth-child(3) {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 860px) {
+  .quantum-lab-canvas-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.quantum-lab-code-grid {
+  display: grid;
+  grid-template-columns: minmax(220px, 260px) 1fr;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .quantum-lab-code-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Monaco Editor Quantum Lab Native Styling */
+.monaco-quantum-container {
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.monaco-quantum-container:focus-within {
+  border-color: var(--accent-cyan) !important;
+  box-shadow: 0 0 0 1px var(--accent-cyan-subtle), 0 0 16px var(--accent-cyan-glow) !important;
+}
+
+.monaco-quantum-container .monaco-editor,
+.monaco-quantum-container .monaco-editor .overflow-guard {
+  border-radius: var(--radius-md);
+}
+
+.monaco-quantum-container .monaco-editor .margin {
+  background-color: #0a0f1d !important;
+}
+
