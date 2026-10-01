@@ -15,6 +15,7 @@ import { ResetConfirmModal } from './components/ResetConfirmModal';
 import { CircuitHelpModal } from './components/CircuitHelpModal';
 import { SimulationResultsPanel } from './components/SimulationResultsPanel';
 import { TutorPanel } from './components/TutorPanel';
+import { MonacoQuantumEditor } from './components/MonacoQuantumEditor';
 import { CIRCUIT_TEMPLATES } from './domain/circuitTemplates';
 
 import { simulateCircuit } from './simulator/quantumSimulator';
@@ -30,10 +31,11 @@ import {
   AlertTriangle,
   Info,
   Loader2,
-  Sparkles
+  Sparkles,
+  Columns,
+  Layout,
+  Code2
 } from 'lucide-react';
-
-
 
 const QuantumLabInner: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -51,6 +53,7 @@ const QuantumLabInner: React.FC = () => {
     setFeedbackMessage
   } = useCircuit();
 
+  const [viewMode, setViewMode] = useState<'split' | 'canvas' | 'code'>('split');
   const [isCodeModalOpen, setIsCodeModalOpen] = useState(false);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
@@ -288,6 +291,86 @@ const QuantumLabInner: React.FC = () => {
             <span>Reset</span>
           </button>
 
+          {/* View Mode Toggle: Split / Canvas / Code */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              backgroundColor: 'var(--bg-elevated)',
+              borderRadius: 'var(--radius-sm)',
+              padding: '2px',
+              border: '1px solid var(--border-medium)',
+              marginLeft: '0.25rem'
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setViewMode('split')}
+              className="btn-icon"
+              title="Split View: Visual Canvas + Monaco Code Editor"
+              aria-label="Split View: Visual Designer and Code Editor"
+              style={{
+                padding: '0.35rem 0.6rem',
+                borderRadius: 'var(--radius-sm)',
+                backgroundColor: viewMode === 'split' ? 'rgba(6, 182, 212, 0.2)' : 'transparent',
+                color: viewMode === 'split' ? 'var(--accent-cyan)' : 'var(--text-secondary)',
+                fontSize: '0.75rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.3rem',
+                border: 'none',
+                cursor: 'pointer'
+              }}
+            >
+              <Columns size={13} />
+              <span>Split</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('canvas')}
+              className="btn-icon"
+              title="Canvas View: Visual Designer Only"
+              aria-label="Canvas Designer Only View"
+              style={{
+                padding: '0.35rem 0.6rem',
+                borderRadius: 'var(--radius-sm)',
+                backgroundColor: viewMode === 'canvas' ? 'rgba(6, 182, 212, 0.2)' : 'transparent',
+                color: viewMode === 'canvas' ? 'var(--accent-cyan)' : 'var(--text-secondary)',
+                fontSize: '0.75rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.3rem',
+                border: 'none',
+                cursor: 'pointer'
+              }}
+            >
+              <Layout size={13} />
+              <span>Canvas</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('code')}
+              className="btn-icon"
+              title="Code View: Monaco Code Editor Only"
+              aria-label="Monaco Code Editor Only View"
+              style={{
+                padding: '0.35rem 0.6rem',
+                borderRadius: 'var(--radius-sm)',
+                backgroundColor: viewMode === 'code' ? 'rgba(6, 182, 212, 0.2)' : 'transparent',
+                color: viewMode === 'code' ? 'var(--accent-cyan)' : 'var(--text-secondary)',
+                fontSize: '0.75rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.3rem',
+                border: 'none',
+                cursor: 'pointer'
+              }}
+            >
+              <Code2 size={13} />
+              <span>Code</span>
+            </button>
+          </div>
+
           {/* JSON View */}
           <button
             type="button"
@@ -431,30 +514,60 @@ const QuantumLabInner: React.FC = () => {
         </div>
       )}
 
-      {/* Main Workbench Grid (Palette | Canvas | Inspector) */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(220px, 260px) minmax(480px, 1fr) minmax(240px, 310px)',
-          gap: '1.25rem',
-          alignItems: 'start'
-        }}
-      >
-        {/* Left Column: Gate Palette */}
-        <div>
-          <GatePalette onOpenHelp={() => setIsHelpModalOpen(true)} />
-        </div>
+      {/* Main Workbench Grid (Rendered according to viewMode) */}
+      {viewMode === 'split' && (
+        <div className="quantum-lab-split-grid">
+          {/* Left Column: Gate Palette + Compact Inspector */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <GatePalette onOpenHelp={() => setIsHelpModalOpen(true)} />
+            <CircuitInspector />
+          </div>
 
-        {/* Center Column: Interactive Circuit Canvas */}
-        <div>
-          <CircuitWorkspace />
-        </div>
+          {/* Center Column: Interactive Circuit Canvas */}
+          <div>
+            <CircuitWorkspace />
+          </div>
 
-        {/* Right Column: Inspector & Validation */}
-        <div>
-          <CircuitInspector />
+          {/* Right Column: Monaco Quantum Code Editor */}
+          <div style={{ height: '100%', minHeight: '480px' }}>
+            <MonacoQuantumEditor />
+          </div>
         </div>
-      </div>
+      )}
+
+      {viewMode === 'canvas' && (
+        <div className="quantum-lab-canvas-grid">
+          {/* Left Column: Gate Palette */}
+          <div>
+            <GatePalette onOpenHelp={() => setIsHelpModalOpen(true)} />
+          </div>
+
+          {/* Center Column: Interactive Circuit Canvas */}
+          <div>
+            <CircuitWorkspace />
+          </div>
+
+          {/* Right Column: Inspector & Validation */}
+          <div>
+            <CircuitInspector />
+          </div>
+        </div>
+      )}
+
+      {viewMode === 'code' && (
+        <div className="quantum-lab-code-grid">
+          {/* Left Column: Gate Palette Reference & Inspector */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <GatePalette onOpenHelp={() => setIsHelpModalOpen(true)} />
+            <CircuitInspector />
+          </div>
+
+          {/* Right Column: Monaco Quantum Code Editor Full-width */}
+          <div style={{ height: '100%', minHeight: '520px' }}>
+            <MonacoQuantumEditor />
+          </div>
+        </div>
+      )}
 
       {/* Phase 4: Classical Quantum Simulation Results */}
       <SimulationResultsPanel

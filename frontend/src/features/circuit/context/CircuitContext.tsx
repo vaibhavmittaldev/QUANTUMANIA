@@ -17,6 +17,7 @@ import {
   addGate,
   removeGate,
   updateGate,
+  moveGate as domainMoveGate,
   setQubitCount as domainSetQubits,
   cloneCircuit
 } from '../domain/circuitDomain';
@@ -34,7 +35,8 @@ interface CircuitContextType {
   redo: () => void;
   selectGate: (gateId: string | null) => void;
   setActiveTool: (tool: GateType | 'SELECT' | 'DELETE' | null) => void;
-  placeGateAt: (step: number, target: number, control?: number) => { success: boolean; error?: string };
+  placeGateAt: (step: number, target: number, control?: number, specificType?: GateType) => { success: boolean; error?: string };
+  moveGate: (gateId: string, toStep: number, toTarget: number) => { success: boolean; error?: string };
   deleteSelectedGate: () => void;
   deleteGateById: (gateId: string) => void;
   replaceSelectedGate: (newType: GateType) => { success: boolean; error?: string };
@@ -43,9 +45,18 @@ interface CircuitContextType {
   resetCircuit: () => void;
   clearGates: () => void;
   loadTemplate: (templateId: string) => boolean;
-  loadCircuit: (circuit: CanonicalCircuit) => boolean;
+  loadCircuit: (circuit: CanonicalCircuit, source?: 'visual' | 'code') => boolean;
   feedbackMessage: { type: 'success' | 'error' | 'info'; text: string } | null;
   setFeedbackMessage: (msg: { type: 'success' | 'error' | 'info'; text: string } | null) => void;
+  // Drag & drop visual interaction state
+  hoveredCell: { step: number; qubit: number } | null;
+  setHoveredCell: (cell: { step: number; qubit: number } | null) => void;
+  // Bidirectional highlighting state between Monaco and visual circuit
+  highlightedGateId: string | null;
+  setHighlightedGateId: (id: string | null) => void;
+  highlightedLineNumber: number | null;
+  setHighlightedLineNumber: (line: number | null) => void;
+  circuitSource: 'visual' | 'code';
 }
 
 const CircuitContext = createContext<CircuitContextType | undefined>(undefined);
@@ -64,6 +75,14 @@ export const CircuitProvider: React.FC<{
   const [activeTool, setActiveTool] = useState<GateType | 'SELECT' | 'DELETE' | null>('H');
   const [feedbackMessage, setFeedbackMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
 
+  // Drag & drop visual interaction state
+  const [hoveredCell, setHoveredCell] = useState<{ step: number; qubit: number } | null>(null);
+
+  // Bidirectional highlighting state between Monaco and visual circuit
+  const [highlightedGateId, setHighlightedGateId] = useState<string | null>(null);
+  const [highlightedLineNumber, setHighlightedLineNumber] = useState<number | null>(null);
+  const [circuitSource, setCircuitSource] = useState<'visual' | 'code'>('visual');
+
   // Derived validation result
   const validation = useMemo(() => validateCircuit(circuit), [circuit]);
 
@@ -74,9 +93,10 @@ export const CircuitProvider: React.FC<{
   }, [circuit.gates, selectedGateId]);
 
   // Helper to commit new state with undo record
-  const pushState = useCallback((nextCircuit: CanonicalCircuit) => {
+  const pushState = useCallback((nextCircuit: CanonicalCircuit, source: 'visual' | 'code' = 'visual') => {
     setHistory((prev) => [...prev.slice(-30), cloneCircuit(circuit)]);
     setFuture([]);
+    setCircuitSource(source);
     setCircuit(nextCircuit);
   }, [circuit]);
 
@@ -86,6 +106,7 @@ export const CircuitProvider: React.FC<{
     const prev = history[history.length - 1];
     setHistory((h) => h.slice(0, -1));
     setFuture((f) => [cloneCircuit(circuit), ...f]);
+    setCircuitSource('visual');
     setCircuit(cloneCircuit(prev));
     setSelectedGateId(null);
   }, [history, circuit]);
@@ -96,6 +117,7 @@ export const CircuitProvider: React.FC<{
     const next = future[0];
     setFuture((f) => f.slice(1));
     setHistory((h) => [...h, cloneCircuit(circuit)]);
+    setCircuitSource('visual');
     setCircuit(cloneCircuit(next));
     setSelectedGateId(null);
   }, [future, circuit]);
@@ -103,8 +125,9 @@ export const CircuitProvider: React.FC<{
   // Keyboard shortcut listener for Undo (Ctrl+Z) / Redo (Ctrl+Y or Ctrl+Shift+Z) and Delete
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore if typing inside input / textarea
-      if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) {
+      // Ignore if typing inside input / textarea / monaco editor
+      const target = e.target as HTMLElement;
+      if (['INPUT', 'TEXTAREA'].includes(target.tagName) || target.closest('.monaco-editor')) {
         return;
       }
 
@@ -122,7 +145,7 @@ export const CircuitProvider: React.FC<{
         if (selectedGateId) {
           e.preventDefault();
           const next = removeGate(circuit, selectedGateId);
-          pushState(next);
+          pushState(next, 'visual');
           setSelectedGateId(null);
           setFeedbackMessage({ type: 'info', text: 'Operation removed from circuit.' });
         }
@@ -139,30 +162,32 @@ export const CircuitProvider: React.FC<{
   // Gate selection
   const selectGate = useCallback((gateId: string | null) => {
     setSelectedGateId(gateId);
+    setHighlightedGateId(gateId);
   }, []);
 
-  // Place gate using active tool or specified tool
+  // Place gate using active tool or explicitly specified gate type
   const placeGateAt = useCallback(
-    (step: number, target: number, control?: number): { success: boolean; error?: string } => {
-      if (!activeTool || activeTool === 'SELECT') {
+    (step: number, target: number, control?: number, specificType?: GateType): { success: boolean; error?: string } => {
+      const toolToUse = specificType || activeTool;
+      if (!toolToUse || toolToUse === 'SELECT') {
         return { success: false, error: 'Select a gate from the palette first.' };
       }
 
-      if (activeTool === 'DELETE') {
+      if (toolToUse === 'DELETE') {
         // Find gate at step and target
         const gate = circuit.gates.find(
           (g) => g.step === step && (g.target === target || (g.targets && g.targets.includes(target)))
         );
         if (gate) {
           const next = removeGate(circuit, gate.id);
-          pushState(next);
+          pushState(next, 'visual');
           setSelectedGateId(null);
           return { success: true };
         }
         return { success: false };
       }
 
-      const gateType = activeTool as GateType;
+      const gateType = toolToUse as GateType;
 
       // Handle CNOT
       if (gateType === 'CNOT') {
@@ -186,7 +211,7 @@ export const CircuitProvider: React.FC<{
           return { success: false, error: res.error };
         }
 
-        pushState(res.circuit);
+        pushState(res.circuit, 'visual');
         setFeedbackMessage({ type: 'success', text: `Placed CNOT (q${ctrl} → q${target}) at step ${step}.` });
         return { success: true };
       }
@@ -203,11 +228,28 @@ export const CircuitProvider: React.FC<{
         return { success: false, error: res.error };
       }
 
-      pushState(res.circuit);
+      pushState(res.circuit, 'visual');
       setFeedbackMessage({ type: 'success', text: `Placed ${gateType} on q${target} at step ${step}.` });
       return { success: true };
     },
     [activeTool, circuit, pushState]
+  );
+
+  // Move existing gate to a new grid position
+  const moveGate = useCallback(
+    (gateId: string, toStep: number, toTarget: number): { success: boolean; error?: string } => {
+      const res = domainMoveGate(circuit, gateId, toStep, toTarget);
+      if (res.error) {
+        setFeedbackMessage({ type: 'error', text: res.error });
+        return { success: false, error: res.error };
+      }
+      pushState(res.circuit, 'visual');
+      setSelectedGateId(gateId);
+      setHighlightedGateId(gateId);
+      setFeedbackMessage({ type: 'success', text: `Moved operation to step ${toStep}, qubit ${toTarget}.` });
+      return { success: true };
+    },
+    [circuit, pushState]
   );
 
   // Delete selected gate
@@ -337,7 +379,7 @@ export const CircuitProvider: React.FC<{
 
   // Load an arbitrary canonical circuit object
   const loadCircuit = useCallback(
-    (newCircuit: CanonicalCircuit): boolean => {
+    (newCircuit: CanonicalCircuit, source: 'visual' | 'code' = 'visual'): boolean => {
       const check = validateCircuit(newCircuit);
       if (!check.is_valid) {
         setFeedbackMessage({
@@ -346,7 +388,7 @@ export const CircuitProvider: React.FC<{
         });
         return false;
       }
-      pushState(cloneCircuit(newCircuit));
+      pushState(cloneCircuit(newCircuit), source);
       setSelectedGateId(null);
       setFeedbackMessage({ type: 'success', text: 'Circuit loaded successfully.' });
       return true;
@@ -369,6 +411,7 @@ export const CircuitProvider: React.FC<{
         selectGate,
         setActiveTool,
         placeGateAt,
+        moveGate,
         deleteSelectedGate,
         deleteGateById,
         replaceSelectedGate,
@@ -379,7 +422,14 @@ export const CircuitProvider: React.FC<{
         loadTemplate,
         loadCircuit,
         feedbackMessage,
-        setFeedbackMessage
+        setFeedbackMessage,
+        hoveredCell,
+        setHoveredCell,
+        highlightedGateId,
+        setHighlightedGateId,
+        highlightedLineNumber,
+        setHighlightedLineNumber,
+        circuitSource
       }}
     >
       {children}

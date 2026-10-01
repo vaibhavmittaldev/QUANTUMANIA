@@ -376,6 +376,78 @@ export function updateGate(
   return { circuit: next };
 }
 
+export function moveGate(
+  circuit: CanonicalCircuit,
+  gateId: string,
+  toStep: number,
+  toTarget: number
+): { circuit: CanonicalCircuit; error?: string } {
+  const next = cloneCircuit(circuit);
+  const gateIdx = next.gates.findIndex((g) => g.id === gateId);
+  if (gateIdx === -1) {
+    return { circuit, error: `Gate with ID '${gateId}' not found.` };
+  }
+
+  const gate = next.gates[gateIdx];
+
+  // If already at destination, no-op
+  if (gate.step === toStep && gate.target === toTarget) {
+    return { circuit };
+  }
+
+  // Calculate new coordinates for CNOT
+  let newControl = gate.control;
+  if (gate.type === 'CNOT' && gate.control !== undefined && gate.target !== undefined) {
+    const delta = gate.control - gate.target;
+    newControl = toTarget + delta;
+    if (newControl < 0 || newControl >= next.qubits) {
+      newControl = toTarget - delta;
+    }
+    if (newControl < 0 || newControl >= next.qubits || newControl === toTarget) {
+      newControl = toTarget === 0 ? 1 : 0;
+    }
+  }
+
+  // Remove the gate temporarily from the circuit to check collision without self-colliding
+  next.gates.splice(gateIdx, 1);
+
+  // Check collision at destination
+  const activeQubits = new Set<number>([toTarget]);
+  if (newControl !== undefined && gate.type === 'CNOT') {
+    activeQubits.add(newControl);
+  }
+
+  // Remove any gate colliding at toStep
+  next.gates = next.gates.filter((g) => {
+    if (g.step !== toStep) return true;
+    const gTargets = getGateTargets(g);
+    const gControls = getGateControls(g);
+    const gActive = new Set([...gTargets, ...gControls]);
+    for (const q of activeQubits) {
+      if (gActive.has(q)) return false;
+    }
+    return true;
+  });
+
+  // Re-insert updated gate
+  next.gates.push({
+    ...gate,
+    step: toStep,
+    target: toTarget,
+    control: newControl
+  });
+
+  const validation = validateCircuit(next);
+  if (!validation.is_valid) {
+    return {
+      circuit,
+      error: validation.errors[0]?.message || 'Cannot move gate to invalid position.'
+    };
+  }
+
+  return { circuit: next };
+}
+
 export function setQubitCount(
   circuit: CanonicalCircuit,
   newCount: number

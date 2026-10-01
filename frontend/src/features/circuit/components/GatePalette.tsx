@@ -29,6 +29,12 @@ export const GatePalette: React.FC<GatePaletteProps> = ({ onOpenHelp }) => {
       <button
         key={type}
         type="button"
+        draggable={true}
+        onDragStart={(e) => {
+          e.dataTransfer.setData('application/quantum-gate', type);
+          e.dataTransfer.effectAllowed = 'copy';
+          setActiveTool(type);
+        }}
         onClick={() => setActiveTool(type)}
         className="gate-palette-btn"
         aria-label={def.accessibleLabel}
