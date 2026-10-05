@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { learningApi, ApiError } from '../../services/api';
-import { LessonDetail, CourseDetail } from '../../types/learning';
+import { LessonDetail, CourseDetail, LabProblemSummary } from '../../types/learning';
 import { ContentBlockRenderer } from './ContentBlockRenderer';
 import { LoadingSpinner, AlertBanner } from '../../components/common/FeedbackStates';
 import {
@@ -23,6 +23,7 @@ export const LessonPage: React.FC = () => {
   const { lessonId } = useParams<{ lessonId: string }>();
   const [lesson, setLesson] = useState<LessonDetail | null>(null);
   const [course, setCourse] = useState<CourseDetail | null>(null);
+  const [labProblems, setLabProblems] = useState<LabProblemSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCompleting, setIsCompleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,14 +43,16 @@ export const LessonPage: React.FC = () => {
       setFeedback(null);
 
       try {
-        const [lessonData, courseData] = await Promise.all([
+        const [lessonData, courseData, problemsData] = await Promise.all([
           learningApi.getLesson(lessonId),
-          learningApi.getCourse('crs_intro_quantum')
+          learningApi.getCourse('crs_intro_quantum'),
+          learningApi.getLessonLabProblems(lessonId).catch(() => [])
         ]);
 
         if (isMounted) {
           setLesson(lessonData);
           setCourse(courseData);
+          setLabProblems(problemsData || []);
           // Record lesson start
           learningApi.startLesson(lessonId).catch(() => {});
         }
@@ -316,22 +319,60 @@ export const LessonPage: React.FC = () => {
 
           {/* Lesson Header */}
           <div style={{ borderBottom: '1px solid var(--border-subtle)', paddingBottom: '1.5rem', marginBottom: '1.75rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
-              <span className="badge badge-purple">{lesson.module_title}</span>
-              <span className="badge badge-cyan">{lesson.difficulty}</span>
-              <span className="badge" style={{ backgroundColor: 'rgba(255, 255, 255, 0.06)', color: 'var(--text-secondary)' }}>
-                <Clock size={12} style={{ marginRight: '4px' }} />
-                {lesson.estimated_minutes} min read
-              </span>
-              <span className="badge" style={{ backgroundColor: 'rgba(255, 255, 255, 0.06)', color: 'var(--accent-emerald)' }}>
-                <Award size={12} style={{ marginRight: '4px' }} />
-                +{lesson.xp_reward} XP
-              </span>
-              {lesson.is_completed && (
-                <span className="badge badge-emerald">
-                  <CheckCircle size={12} style={{ marginRight: '4px' }} />
-                  Completed
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <span className="badge badge-purple">{lesson.module_title}</span>
+                <span className="badge badge-cyan">{lesson.difficulty}</span>
+                <span className="badge" style={{ backgroundColor: 'rgba(255, 255, 255, 0.06)', color: 'var(--text-secondary)' }}>
+                  <Clock size={12} style={{ marginRight: '4px' }} />
+                  {lesson.estimated_minutes} min read
                 </span>
+                <span className="badge" style={{ backgroundColor: 'rgba(255, 255, 255, 0.06)', color: 'var(--accent-emerald)' }}>
+                  <Award size={12} style={{ marginRight: '4px' }} />
+                  +{lesson.xp_reward} XP
+                </span>
+                {lesson.is_completed && (
+                  <span className="badge badge-emerald">
+                    <CheckCircle size={12} style={{ marginRight: '4px' }} />
+                    Completed
+                  </span>
+                )}
+              </div>
+
+              {/* LAB PRACTICE BUTTON - Only rendered when lesson has practical lab problems */}
+              {(Boolean(lesson.has_lab_practice) || labProblems.length > 0) && (
+                <button
+                  id="btn-lab-practice"
+                  onClick={() => {
+                    const activeProblem = labProblems[0];
+                    const url = activeProblem
+                      ? `/app/quantum-lab?topic=${encodeURIComponent(activeProblem.topic_id || lesson.topic_id || lesson.title)}&task=${encodeURIComponent(activeProblem.title)}&lesson_id=${lesson.id}&lab_problem_id=${activeProblem.id}`
+                      : `/app/quantum-lab?topic=${encodeURIComponent(lesson.topic_id || lesson.title)}&task=${encodeURIComponent(`Practice ${lesson.title}`)}&lesson_id=${lesson.id}${lesson.interactive?.templateId ? `&template=${lesson.interactive.templateId}` : ''}`;
+                    navigate(url);
+                  }}
+                  className="btn btn-primary"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.45rem 1.15rem',
+                    fontSize: '0.85rem',
+                    fontWeight: 700,
+                    letterSpacing: '0.04em',
+                    background: 'linear-gradient(135deg, #00F2FE 0%, #4FACFE 100%)',
+                    color: '#04101e',
+                    border: 'none',
+                    borderRadius: 'var(--radius-md)',
+                    boxShadow: '0 0 16px rgba(0, 242, 254, 0.35)',
+                    cursor: 'pointer',
+                    transition: 'all var(--transition-fast)'
+                  }}
+                  title="Open Quantum Lab to solve practical circuit challenges for this topic"
+                >
+                  <Cpu size={16} />
+                  <span>LAB PRACTICE</span>
+                  <ArrowRight size={14} />
+                </button>
               )}
             </div>
 
@@ -379,8 +420,141 @@ export const LessonPage: React.FC = () => {
             ))}
           </div>
 
-          {/* Interactive Quantum Lab Integration Card (Tanishq's Phase 3-5 Connection) */}
-          {lesson.interactive && (
+          {/* Dedicated Lab Practice Problems Section (when available) */}
+          {labProblems.length > 0 ? (
+            <div
+              style={{
+                padding: '1.5rem',
+                borderRadius: 'var(--radius-lg)',
+                border: '1px solid rgba(0, 242, 254, 0.3)',
+                background: 'linear-gradient(135deg, rgba(8, 15, 30, 0.95) 0%, rgba(13, 27, 54, 0.85) 100%)',
+                marginBottom: '2.5rem',
+                boxShadow: '0 8px 30px rgba(0, 0, 0, 0.4)'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div
+                    style={{
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: 'var(--radius-md)',
+                      backgroundColor: 'rgba(0, 242, 254, 0.15)',
+                      color: 'var(--accent-cyan)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: '0 0 15px rgba(0, 242, 254, 0.3)'
+                    }}
+                  >
+                    <Cpu size={22} />
+                  </div>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span className="badge badge-cyan" style={{ fontSize: '0.7rem' }}>
+                        Lab Practice Challenges
+                      </span>
+                      <Sparkles size={14} color="var(--accent-cyan)" />
+                    </div>
+                    <h3 style={{ fontSize: '1.15rem', color: 'var(--text-primary)', margin: '2px 0 0 0' }}>
+                      Hands-On Quantum Lab Circuit Tasks
+                    </h3>
+                  </div>
+                </div>
+
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                  {labProblems.filter((p) => p.is_completed).length} / {labProblems.length} completed
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {labProblems.map((problem, idx) => (
+                  <div
+                    key={problem.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '1rem 1.25rem',
+                      backgroundColor: 'rgba(10, 18, 38, 0.7)',
+                      border: problem.is_completed
+                        ? '1px solid rgba(16, 185, 129, 0.3)'
+                        : '1px solid rgba(255, 255, 255, 0.08)',
+                      borderRadius: 'var(--radius-md)',
+                      gap: '1rem',
+                      flexWrap: 'wrap',
+                      transition: 'border-color var(--transition-fast)'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <div
+                        style={{
+                          width: '26px',
+                          height: '26px',
+                          borderRadius: '50%',
+                          backgroundColor: problem.is_completed
+                            ? 'rgba(16, 185, 129, 0.2)'
+                            : 'rgba(0, 242, 254, 0.15)',
+                          color: problem.is_completed ? 'var(--accent-emerald)' : 'var(--accent-cyan)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          flexShrink: 0
+                        }}
+                      >
+                        {problem.is_completed ? '✓' : idx + 1}
+                      </div>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.2rem' }}>
+                          <span style={{ fontWeight: 600, fontSize: '0.95rem', color: 'var(--text-primary)' }}>
+                            {problem.title}
+                          </span>
+                          <span
+                            className={`badge ${
+                              problem.difficulty === 'beginner'
+                                ? 'badge-cyan'
+                                : problem.difficulty === 'intermediate'
+                                ? 'badge-purple'
+                                : 'badge-amber'
+                            }`}
+                            style={{ fontSize: '0.65rem' }}
+                          >
+                            {problem.difficulty}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                          <span>⏱ ~{problem.estimated_minutes} mins</span>
+                          <span>🏆 +{problem.xp_reward} XP</span>
+                          {problem.is_completed && (
+                            <span style={{ color: 'var(--accent-emerald)', fontWeight: 600 }}>✓ Completed</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        const url = `/app/quantum-lab?topic=${encodeURIComponent(
+                          problem.topic_id || lesson.topic_id || lesson.title
+                        )}&task=${encodeURIComponent(problem.title)}&lesson_id=${lesson.id}&lab_problem_id=${
+                          problem.id
+                        }`;
+                        navigate(url);
+                      }}
+                      className={`btn ${problem.is_completed ? 'btn-secondary' : 'btn-primary'}`}
+                      style={{ padding: '0.4rem 1rem', fontSize: '0.8rem' }}
+                    >
+                      <span>{problem.is_completed ? 'Review in Lab' : 'Start Lab Practice'}</span>
+                      <ArrowRight size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : lesson.interactive ? (
+            /* Fallback Interactive Quantum Lab Integration Card */
             <div
               style={{
                 padding: '1.5rem',
@@ -427,12 +601,17 @@ export const LessonPage: React.FC = () => {
                 </div>
               </div>
 
-              <Link to="/app/quantum-lab" className="btn btn-primary">
+              <Link
+                to={`/app/quantum-lab?topic=${encodeURIComponent(lesson.topic_id || lesson.title)}&task=${encodeURIComponent(
+                  `Practice ${lesson.title}`
+                )}&lesson_id=${lesson.id}${lesson.interactive.templateId ? `&template=${lesson.interactive.templateId}` : ''}`}
+                className="btn btn-primary"
+              >
                 <span>{lesson.interactive.label || 'Open in Quantum Lab'}</span>
                 <ArrowRight size={16} />
               </Link>
             </div>
-          )}
+          ) : null}
 
           {/* Action Footer Navigation */}
           <div

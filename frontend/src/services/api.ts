@@ -5,13 +5,22 @@ import {
   ModuleSummary,
   LessonDetail,
   LessonCompleteResponse,
-  LearningProgressSummary
+  LearningProgressSummary,
+  LabProblemSummary,
+  LabProblemDetail,
+  LabValidationResponse,
+  LabValidationRequest
 } from '../types/learning';
 import {
   CanonicalCircuit,
   CircuitValidationResult,
   CircuitTemplate,
-  SimulationResult
+  SimulationResult,
+  SimulationOptions,
+  CompareResult,
+  SavedCircuit,
+  SaveCircuitResponse,
+  OpenQASMExportResponse
 } from '../types/circuit';
 import {
   TutorRequest,
@@ -191,6 +200,25 @@ export const learningApi = {
     return request<LearningProgressSummary>('/learning/progress', {
       method: 'GET'
     });
+  },
+
+  getLessonLabProblems: (lessonId: string) => {
+    return request<LabProblemSummary[]>(`/lessons/${lessonId}/lab-problems`, {
+      method: 'GET'
+    });
+  },
+
+  getLabProblem: (problemId: string) => {
+    return request<LabProblemDetail>(`/lab-problems/${problemId}`, {
+      method: 'GET'
+    });
+  },
+
+  validateLabProblem: (problemId: string, payload: LabValidationRequest) => {
+    return request<LabValidationResponse>(`/lab-problems/${problemId}/validate`, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
   }
 };
 
@@ -214,10 +242,86 @@ export const quantumApi = {
     });
   },
 
-  simulateCircuit: (circuit: CanonicalCircuit, shots = 1024) => {
+  simulateCircuit: (circuit: CanonicalCircuit, optionsOrShots?: number | SimulationOptions) => {
+    let payload: Record<string, any> = { circuit };
+    if (typeof optionsOrShots === 'number') {
+      payload.shots = optionsOrShots;
+    } else if (optionsOrShots) {
+      payload = {
+        circuit,
+        shots: optionsOrShots.shots ?? 1024,
+        backend: optionsOrShots.backend,
+        mode: optionsOrShots.mode,
+        noise_enabled: optionsOrShots.noise?.enabled,
+        step_index: optionsOrShots.stepIndex,
+        seed: optionsOrShots.seed,
+        tolerance: optionsOrShots.tolerance
+      };
+    } else {
+      payload.shots = 1024;
+    }
     return request<SimulationResult>('/quantum/simulate', {
       method: 'POST',
-      body: JSON.stringify({ circuit, shots })
+      body: JSON.stringify(payload)
+    });
+  },
+
+  compareFrameworks: (
+    circuit: CanonicalCircuit,
+    frameworks: string[] = ['Qiskit', 'PennyLane', 'Cirq'],
+    shots: number = 1024,
+    mode: string = 'statevector'
+  ) => {
+    return request<CompareResult>('/quantum/compare', {
+      method: 'POST',
+      body: JSON.stringify({ circuit, frameworks, shots, mode })
+    });
+  },
+
+  toOpenQasm: (circuit: CanonicalCircuit) => {
+    return request<OpenQASMExportResponse>('/quantum/to-openqasm', {
+      method: 'POST',
+      body: JSON.stringify(circuit)
+    });
+  },
+
+  toQiskit: (circuit: CanonicalCircuit) => {
+    return request<{ code: string }>('/quantum/to-qiskit', {
+      method: 'POST',
+      body: JSON.stringify(circuit)
+    });
+  },
+
+  fromQiskit: (code: string) => {
+    return request<{ circuit: CanonicalCircuit }>('/quantum/from-qiskit', {
+      method: 'POST',
+      body: JSON.stringify({ code })
+    });
+  },
+
+  saveCircuit: (payload: { circuit: CanonicalCircuit; title?: string; qiskit_code?: string }) => {
+    return request<SaveCircuitResponse>('/quantum/save', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  },
+
+  getSavedCircuits: () => {
+    return request<SavedCircuit[]>('/quantum/saved', {
+      method: 'GET'
+    });
+  },
+
+  getSavedCircuitById: (circuitId: string) => {
+    return request<SavedCircuit>(`/quantum/circuits/${circuitId}`, {
+      method: 'GET'
+    });
+  },
+
+  getHint: (payload: { topic?: string; task?: string; circuit?: CanonicalCircuit; code?: string }) => {
+    return request<{ hint: string; topic?: string }>('/quantum/hint', {
+      method: 'POST',
+      body: JSON.stringify(payload)
     });
   }
 };

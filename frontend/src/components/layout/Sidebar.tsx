@@ -2,7 +2,8 @@ import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { MAIN_NAV_ITEMS, ACCOUNT_NAV_ITEMS } from '../../config/navigation';
 import { useAuth } from '../../context/AuthContext';
-import { LogOut, X, Atom } from 'lucide-react';
+import { LogOut, X } from 'lucide-react';
+import { QVerseLogo } from '../common/QVerseLogo';
 
 interface SidebarProps {
   mobileOpen: boolean;
@@ -41,40 +42,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onCloseMobile }) =
           padding: '0 0.5rem'
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div
-            style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: 'var(--radius-md)',
-              background: 'linear-gradient(135deg, var(--accent-cyan), var(--accent-purple))',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#04101e',
-              boxShadow: 'var(--shadow-glow-cyan)'
-            }}
-          >
-            <Atom size={22} aria-hidden="true" />
-          </div>
-          <div>
-            <span
-              style={{
-                fontFamily: 'var(--font-heading)',
-                fontWeight: 700,
-                fontSize: '1.15rem',
-                letterSpacing: '-0.02em',
-                background: 'linear-gradient(135deg, #ffffff 40%, var(--accent-cyan) 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent'
-              }}
-            >
-              QUANTUMANIA
-            </span>
-            <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-              Learning Platform
-            </div>
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <QVerseLogo variant="full" height={36} />
         </div>
 
         {/* Mobile close button */}

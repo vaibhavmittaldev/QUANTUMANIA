@@ -5,13 +5,18 @@ from app.db.base import get_db
 from app.db.models.user import User
 from app.api.deps import get_current_user, get_current_user_optional
 from app.services.learning_service import LearningService
+from app.services.lab_service import LabService
 from app.schemas.learning import (
     CourseSummary,
     CourseDetail,
     ModuleSummary,
     LessonDetail,
     LessonCompleteResponse,
-    LearningProgressSummary
+    LearningProgressSummary,
+    LabProblemSummary,
+    LabProblemDetail,
+    LabValidationRequest,
+    LabValidationResponse
 )
 from app.schemas.common import StandardSuccessResponse
 
@@ -124,3 +129,55 @@ def get_progress(
 ):
     progress = LearningService.get_user_learning_progress(db, current_user)
     return StandardSuccessResponse(success=True, data=progress)
+
+
+@router.get(
+    "/lessons/{lesson_id}/lab-problems",
+    response_model=StandardSuccessResponse[List[LabProblemSummary]],
+    status_code=status.HTTP_200_OK,
+    summary="Get all practical quantum lab problems for a lesson"
+)
+def get_lesson_lab_problems(
+    lesson_id: str,
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    problems = LabService.get_lab_problems_for_lesson(db, lesson_id, current_user)
+    return StandardSuccessResponse(success=True, data=problems)
+
+
+@router.get(
+    "/lab-problems/{problem_id}",
+    response_model=StandardSuccessResponse[LabProblemDetail],
+    status_code=status.HTTP_200_OK,
+    summary="Get detailed lab problem instructions, starter circuit, and hints"
+)
+def get_lab_problem(
+    problem_id: str,
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    problem = LabService.get_lab_problem_detail(db, problem_id, current_user)
+    return StandardSuccessResponse(success=True, data=problem)
+
+
+@router.post(
+    "/lab-problems/{problem_id}/validate",
+    response_model=StandardSuccessResponse[LabValidationResponse],
+    status_code=status.HTTP_200_OK,
+    summary="Validate circuit and simulation results against lab problem requirements"
+)
+def validate_lab_problem(
+    problem_id: str,
+    payload: LabValidationRequest,
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    res = LabService.validate_lab_submission(
+        db,
+        problem_id,
+        circuit_data=payload.circuit,
+        simulation_result=payload.simulation_result,
+        user=current_user
+    )
+    return StandardSuccessResponse(success=True, data=res)

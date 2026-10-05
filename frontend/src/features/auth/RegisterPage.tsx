@@ -3,9 +3,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { ApiError } from '../../services/api';
 import { AlertBanner } from '../../components/common/FeedbackStates';
-import { Atom, Eye, EyeOff, UserPlus, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, UserPlus, Loader2 } from 'lucide-react';
+import { QVerseLogo } from '../../components/common/QVerseLogo';
+import { useDocumentTitle } from '../../components/common/useDocumentTitle';
 
 export const RegisterPage: React.FC = () => {
+  useDocumentTitle('Create Account');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -91,37 +94,11 @@ export const RegisterPage: React.FC = () => {
     >
       {/* Brand Header */}
       <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
-        <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none' }}>
-          <div
-            style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: 'var(--radius-md)',
-              background: 'linear-gradient(135deg, var(--accent-cyan), var(--accent-purple))',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#04101e'
-            }}
-          >
-            <Atom size={24} aria-hidden="true" />
-          </div>
-          <span
-            style={{
-              fontFamily: 'var(--font-heading)',
-              fontSize: '1.5rem',
-              fontWeight: 700,
-              letterSpacing: '-0.02em',
-              background: 'linear-gradient(135deg, #ffffff 40%, var(--accent-cyan) 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent'
-            }}
-          >
-            QUANTUMANIA
-          </span>
+        <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', textDecoration: 'none' }}>
+          <QVerseLogo variant="full" height={44} />
         </Link>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.5rem' }}>
-          Create an account to unlock interactive quantum algorithm labs
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.75rem' }}>
+          Create an account to unlock interactive quantum algorithm labs in QVerse
         </p>
       </div>
 

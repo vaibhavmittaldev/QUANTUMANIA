@@ -28,7 +28,7 @@ export function generateQuantumCode(circuit: CanonicalCircuit): CodeGenerationRe
   };
 
   // 1. Header & Circuit Initialization
-  addLine('# QUANTUMANIA Quantum Circuit');
+  addLine('# QVerse Quantum Circuit');
   const cBits = circuit.classical_bits !== undefined ? circuit.classical_bits : circuit.qubits;
   if (cBits > 0 && cBits !== circuit.qubits) {
     addLine(`qc = QuantumCircuit(${circuit.qubits}, ${cBits})`);

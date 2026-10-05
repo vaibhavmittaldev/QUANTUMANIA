@@ -23,7 +23,10 @@ import {
   applySingleQubitGate,
   applyCNOT,
   applyCZ,
-  applySWAP
+  applySWAP,
+  getRotationXMatrix,
+  getRotationYMatrix,
+  getRotationZMatrix
 } from './gates';
 import { sampleMeasurements } from './measurement';
 import { generateEducationalExplanation } from './educationalExplanations';
@@ -67,10 +70,14 @@ export function simulateCircuit(
 
   try {
     // 2. Sort operations by time-step column
-    const sortedGates = [...circuit.gates].sort((a, b) => {
+    let sortedGates = [...circuit.gates].sort((a, b) => {
       if (a.step !== b.step) return a.step - b.step;
       return (a.target ?? 0) - (b.target ?? 0);
     });
+
+    if (options?.stepIndex !== undefined) {
+      sortedGates = sortedGates.filter((g) => g.step <= (options.stepIndex as number));
+    }
 
     // 3. Initialize Ground State |00...0⟩
     let state = createInitialState(circuit.qubits);
@@ -93,6 +100,15 @@ export function simulateCircuit(
         if (!matrix) {
           throw new Error(`Unsupported gate: ${gType}`);
         }
+        state = applySingleQubitGate(state, matrix, target, circuit.qubits);
+      } else if (['RX', 'RY', 'RZ'].includes(gType)) {
+        const target = gate.target !== undefined ? gate.target : gate.targets?.[0];
+        if (target === undefined) {
+          throw new Error(`Gate ${gType} requires a target qubit.`);
+        }
+        const thetaParam = gate.params?.theta;
+        const theta = typeof thetaParam === 'number' ? thetaParam : typeof thetaParam === 'string' ? parseFloat(thetaParam) || Math.PI / 2 : Math.PI / 2;
+        const matrix = gType === 'RX' ? getRotationXMatrix(theta) : gType === 'RY' ? getRotationYMatrix(theta) : getRotationZMatrix(theta);
         state = applySingleQubitGate(state, matrix, target, circuit.qubits);
       } else if (gType === 'CNOT') {
         const ctrl = gate.control !== undefined ? gate.control : gate.controls?.[0];

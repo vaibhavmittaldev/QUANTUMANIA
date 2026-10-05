@@ -40,6 +40,7 @@ interface CircuitContextType {
   deleteSelectedGate: () => void;
   deleteGateById: (gateId: string) => void;
   replaceSelectedGate: (newType: GateType) => { success: boolean; error?: string };
+  updateGateParam: (gateId: string, paramKey: string, value: any) => { success: boolean; error?: string };
   setQubits: (count: number) => { success: boolean; error?: string };
   setCircuitName: (name: string) => void;
   resetCircuit: () => void;
@@ -191,7 +192,6 @@ export const CircuitProvider: React.FC<{
 
       // Handle CNOT
       if (gateType === 'CNOT') {
-        // If control is not explicitly provided, choose an adjacent qubit
         const ctrl = control !== undefined ? control : target === 0 ? 1 : 0;
         if (ctrl === target) {
           const err = 'CNOT requires two distinct qubits: control and target cannot be identical.';
@@ -216,11 +216,66 @@ export const CircuitProvider: React.FC<{
         return { success: true };
       }
 
-      // Handle single-qubit gates & measurement
+      // Handle CZ
+      if (gateType === 'CZ') {
+        const ctrl = control !== undefined ? control : target === 0 ? 1 : 0;
+        if (ctrl === target) {
+          const err = 'CZ requires two distinct qubits: control and target cannot be identical.';
+          setFeedbackMessage({ type: 'error', text: err });
+          return { success: false, error: err };
+        }
+
+        const res = addGate(circuit, {
+          type: 'CZ',
+          control: ctrl,
+          target: target,
+          step
+        });
+
+        if (res.error) {
+          setFeedbackMessage({ type: 'error', text: res.error });
+          return { success: false, error: res.error };
+        }
+
+        pushState(res.circuit, 'visual');
+        setFeedbackMessage({ type: 'success', text: `Placed CZ (q${ctrl} → q${target}) at step ${step}.` });
+        return { success: true };
+      }
+
+      // Handle SWAP
+      if (gateType === 'SWAP') {
+        const other = control !== undefined ? control : target === 0 ? 1 : 0;
+        if (other === target) {
+          const err = 'SWAP requires two distinct qubits.';
+          setFeedbackMessage({ type: 'error', text: err });
+          return { success: false, error: err };
+        }
+
+        const res = addGate(circuit, {
+          type: 'SWAP',
+          targets: [target, other],
+          target: target,
+          step
+        });
+
+        if (res.error) {
+          setFeedbackMessage({ type: 'error', text: res.error });
+          return { success: false, error: res.error };
+        }
+
+        pushState(res.circuit, 'visual');
+        setFeedbackMessage({ type: 'success', text: `Placed SWAP (q${target} ↔ q${other}) at step ${step}.` });
+        return { success: true };
+      }
+
+      // Handle single-qubit gates, rotations & measurement
+      const isRotation = ['RX', 'RY', 'RZ'].includes(gateType);
       const res = addGate(circuit, {
         type: gateType,
         target: target,
-        step
+        step,
+        params: isRotation ? { theta: Math.PI / 2 } : undefined,
+        parameters: isRotation ? { theta: 'pi/2' } : undefined
       });
 
       if (res.error) {
@@ -315,6 +370,26 @@ export const CircuitProvider: React.FC<{
       return { success: true };
     },
     [selectedGate, circuit, pushState]
+  );
+
+  // Update gate parameter (e.g. theta for rotation gates)
+  const updateGateParam = useCallback(
+    (gateId: string, paramKey: string, value: any): { success: boolean; error?: string } => {
+      const g = circuit.gates.find((gate) => gate.id === gateId);
+      if (!g) return { success: false, error: 'Gate not found' };
+      const currentParams = g.params || {};
+      const res = updateGate(circuit, gateId, {
+        params: { ...currentParams, [paramKey]: value },
+        parameters: { ...(g.parameters || {}), [paramKey]: value }
+      });
+      if (res.error) {
+        setFeedbackMessage({ type: 'error', text: res.error });
+        return { success: false, error: res.error };
+      }
+      pushState(res.circuit);
+      return { success: true };
+    },
+    [circuit, pushState]
   );
 
   // Change qubit count
@@ -415,6 +490,7 @@ export const CircuitProvider: React.FC<{
         deleteSelectedGate,
         deleteGateById,
         replaceSelectedGate,
+        updateGateParam,
         setQubits,
         setCircuitName,
         resetCircuit,

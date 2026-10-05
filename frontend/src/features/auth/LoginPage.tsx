@@ -3,9 +3,12 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { ApiError } from '../../services/api';
 import { AlertBanner } from '../../components/common/FeedbackStates';
-import { Atom, Eye, EyeOff, LogIn, Loader2, Sparkles } from 'lucide-react';
+import { Eye, EyeOff, LogIn, Loader2, Sparkles } from 'lucide-react';
+import { QVerseLogo } from '../../components/common/QVerseLogo';
+import { useDocumentTitle } from '../../components/common/useDocumentTitle';
 
 export const LoginPage: React.FC = () => {
+  useDocumentTitle('Log In');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -70,37 +73,11 @@ export const LoginPage: React.FC = () => {
     >
       {/* Brand header */}
       <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-        <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none' }}>
-          <div
-            style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: 'var(--radius-md)',
-              background: 'linear-gradient(135deg, var(--accent-cyan), var(--accent-purple))',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#04101e'
-            }}
-          >
-            <Atom size={24} aria-hidden="true" />
-          </div>
-          <span
-            style={{
-              fontFamily: 'var(--font-heading)',
-              fontSize: '1.5rem',
-              fontWeight: 700,
-              letterSpacing: '-0.02em',
-              background: 'linear-gradient(135deg, #ffffff 40%, var(--accent-cyan) 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent'
-            }}
-          >
-            QUANTUMANIA
-          </span>
+        <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', textDecoration: 'none' }}>
+          <QVerseLogo variant="full" height={44} />
         </Link>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.5rem' }}>
-          Log in to continue your quantum computing journey
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.75rem' }}>
+          Log in to continue your quantum computing journey in QVerse
         </p>
       </div>
 

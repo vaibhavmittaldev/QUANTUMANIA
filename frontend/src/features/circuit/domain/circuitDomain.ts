@@ -208,7 +208,57 @@ export function validateCircuit(circuit: CanonicalCircuit): CircuitValidationRes
           });
         }
       }
-    } else if (['X', 'Y', 'Z', 'H', 'S', 'T'].includes(gType)) {
+    } else if (gType === 'CZ') {
+      if (controls.length === 0) {
+        errors.push({
+          gate_id: gate.id,
+          gate_index: idx,
+          gate_type: gType,
+          message: 'CZ gate requires a control qubit.',
+          violation: 'MISSING_CONTROL'
+        });
+      }
+      if (targets.length === 0) {
+        errors.push({
+          gate_id: gate.id,
+          gate_index: idx,
+          gate_type: gType,
+          message: 'CZ gate requires a target qubit.',
+          violation: 'MISSING_TARGET'
+        });
+      }
+      if (controls.length > 0 && targets.length > 0) {
+        const ctrl = controls[0];
+        const tgt = targets[0];
+        if (ctrl === tgt) {
+          errors.push({
+            gate_id: gate.id,
+            gate_index: idx,
+            gate_type: gType,
+            message: `A CZ gate requires two different qubits: control (q${ctrl}) and target (q${tgt}) cannot be identical.`,
+            violation: 'CONTROL_EQUALS_TARGET'
+          });
+        }
+      }
+    } else if (gType === 'SWAP') {
+      if (targets.length < 2) {
+        errors.push({
+          gate_id: gate.id,
+          gate_index: idx,
+          gate_type: gType,
+          message: 'SWAP gate requires two target qubits.',
+          violation: 'MISSING_TARGET'
+        });
+      } else if (targets[0] === targets[1]) {
+        errors.push({
+          gate_id: gate.id,
+          gate_index: idx,
+          gate_type: gType,
+          message: 'SWAP gate targets must be two different qubits.',
+          violation: 'DUPLICATE_TARGET'
+        });
+      }
+    } else if (['X', 'Y', 'Z', 'H', 'S', 'T', 'RX', 'RY', 'RZ'].includes(gType)) {
       if (targets.length === 0) {
         errors.push({
           gate_id: gate.id,

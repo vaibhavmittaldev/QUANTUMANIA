@@ -178,3 +178,31 @@ export function applySWAP(
 
   return nextState;
 }
+
+export function getRotationXMatrix(theta: number): GateMatrix2x2 {
+  const half = theta / 2;
+  const cos = Math.cos(half);
+  const sin = Math.sin(half);
+  return [
+    [complex(cos, 0), complex(0, -sin)],
+    [complex(0, -sin), complex(cos, 0)]
+  ];
+}
+
+export function getRotationYMatrix(theta: number): GateMatrix2x2 {
+  const half = theta / 2;
+  const cos = Math.cos(half);
+  const sin = Math.sin(half);
+  return [
+    [complex(cos, 0), complex(-sin, 0)],
+    [complex(sin, 0), complex(cos, 0)]
+  ];
+}
+
+export function getRotationZMatrix(theta: number): GateMatrix2x2 {
+  const half = theta / 2;
+  return [
+    [complex(Math.cos(-half), Math.sin(-half)), complex(0, 0)],
+    [complex(0, 0), complex(Math.cos(half), Math.sin(half))]
+  ];
+}

@@ -1,0 +1,92 @@
+/**
+ * QUANTUMANIA - QuantumLab Circuit Workspace Styles
+ * High-density, professional technical dark interface for Quantum Circuit Builder.
+ */
+
+.quantumlab-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0.75rem;
+  color: #f1f5f9;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  user-select: none;
+}
+
+/* Background grid for Circuit Canvas */
+.quantum-grid-bg {
+  background-color: #080b14;
+  background-image: 
+    linear-gradient(rgba(14, 165, 233, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(14, 165, 233, 0.05) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* Glowing Quantum Accents */
+.glow-cyan {
+  box-shadow: 0 0 15px rgba(6, 182, 212, 0.25);
+}
+
+.glow-blue {
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.25);
+}
+
+.glow-purple {
+  box-shadow: 0 0 15px rgba(168, 85, 247, 0.25);
+}
+
+/* Panels */
+.ql-panel {
+  background-color: #0a0f1d;
+  border: 1px solid rgba(8, 51, 68, 0.7);
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.ql-panel-inner {
+  background-color: #080c18;
+  border: 1px solid #1e293b;
+  border-radius: 0.5rem;
+}
+
+/* Custom Scrollbars */
+.ql-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.ql-scrollbar::-webkit-scrollbar-track {
+  background: rgba(13, 18, 34, 0.6);
+}
+
+.ql-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.2);
+  border-radius: 3px;
+}
+
+.ql-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 189, 248, 0.4);
+}
+
+/* QVerse IDE Monaco Editor Styles */
+.qverse-monaco-ide-panel {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.qverse-monaco-ide-panel:hover {
+  border-color: rgba(56, 189, 248, 0.28) !important;
+}
+
+.qverse-editor-btn {
+  transition: all 0.15s ease;
+}
+
+.qverse-editor-btn:hover {
+  background-color: #172554 !important;
+  color: #38bdf8 !important;
+  border-color: rgba(56, 189, 248, 0.4) !important;
+}
+

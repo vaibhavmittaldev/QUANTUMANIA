@@ -395,7 +395,7 @@ class DeterministicTutorProvider(BaseAIProvider):
                 message=(
                     "### Simulation Result Required\n\n"
                     "You asked about the circuit's results, but the circuit has not been simulated yet! "
-                    "In QUANTUMANIA, the AI Tutor grounds its explanations strictly in real mathematical simulation data rather than guessing.\n\n"
+                    "In QVerse, the AI Tutor grounds its explanations strictly in real mathematical simulation data rather than guessing.\n\n"
                     "👉 **Please click the 'Run Circuit' button in the toolbar** to compute the exact statevector and measurement counts, then ask again!"
                 ),
                 key_points=["Simulation required for result-specific questions"],

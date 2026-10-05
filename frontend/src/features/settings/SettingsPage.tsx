@@ -21,7 +21,7 @@ export const SettingsPage: React.FC = () => {
           <h2 style={{ fontSize: '1.2rem' }}>Appearance & Theme</h2>
         </div>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1.25rem' }}>
-          QUANTUMANIA utilizes an educational dark mode optimized for visual clarity on circuit lines and Hilbert space representations.
+          QVerse utilizes an educational dark mode optimized for visual clarity on circuit lines and Hilbert space representations.
         </p>
 
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>

@@ -159,11 +159,29 @@ CURRICULUM_LESSONS = [
             {"type": "text", "content": "Consider the state with equal weighting α = 1/√2 and β = 1/√2:"},
             {"type": "equation", "content": "|+⟩ = (1/√2)|0⟩ + (1/√2)|1⟩"},
             {"type": "text", "content": "Measuring this state yields outcome 0 with probability |1/√2|^2 = 1/2 (50%) and outcome 1 with probability |1/√2|^2 = 1/2 (50%)."},
-            {"type": "example", "title": "Why Phase Matters", "content": "Consider state |-⟩ = (1/√2)|0⟩ - (1/√2)|1⟩. It also has 50% probability for 0 and 50% for 1. Yet |+⟩ and |-⟩ are completely orthogonal states (inner product = 0)! The relative minus sign (phase) enables destructive interference, which quantum algorithms use to cancel out incorrect answers."}
+            {"type": "example", "title": "Why Phase Matters", "content": "Consider state |-⟩ = (1/√2)|0⟩ - (1/√2)|1⟩. It also has 50% probability for 0 and 50% for 1. Yet |+⟩ and |-⟩ are completely orthogonal states (inner product = 0)! The relative minus sign (phase) enables destructive interference, which quantum algorithms use to cancel out incorrect answers."},
+            {"type": "heading", "content": "4. State-Vector Representation on the Bloch Sphere"},
+            {"type": "text", "content": "Geometrically, any pure single-qubit superposition state can be visualized on the 3-dimensional unit sphere (the Bloch Sphere). In spherical coordinates:"},
+            {"type": "equation", "content": "|ψ⟩ = cos(θ/2)|0⟩ + e^(iφ)sin(θ/2)|1⟩"},
+            {"type": "text", "content": "For equal superposition states (|θ = π/2|), the state vector lies directly on the equator of the sphere. The state |+⟩ points along the positive X-axis (φ = 0), while |-⟩ points along the negative X-axis (φ = π)."},
+            {"type": "heading", "content": "5. Quantum Circuit Construction & Simulation"},
+            {"type": "text", "content": "To prepare a superposition state in a quantum processor, we initialize the qubit in its natural thermal ground state |0⟩ and execute a Hadamard gate (H). In Qiskit, this is written as qc.h(0). When simulated over 1024 shots, projective measurements yield approximately 512 counts for '0' and 512 counts for '1'."},
+            {"type": "callout", "variant": "tip", "content": "Laboratory Practice: You can immediately test this superposition experiment in the Quantum Lab. Click the LAB PRACTICE button above to place the Hadamard gate on q0 and observe live measurement collapse!"}
         ],
-        "content_markdown": "# Superposition\n\nDeep dive into probability amplitudes and linear combinations.",
-        "initial_circuit_json": None,
-        "interactive_meta_json": None
+        "content_markdown": "# Superposition\n\nDeep dive into probability amplitudes, Bloch sphere geometry, and linear combinations.",
+        "initial_circuit_json": {
+            "schema_version": "1.0.0",
+            "name": "Superposition Circuit",
+            "qubits": 1,
+            "classical_bits": 1,
+            "gates": [{"id": "g-h0", "type": "H", "target": 0, "step": 0}],
+            "measurements": [{"qubit": 0, "classical_bit": 0}]
+        },
+        "interactive_meta_json": {
+            "type": "quantum_lab",
+            "templateId": "superposition",
+            "label": "Open in Quantum Lab"
+        }
     },
     {
         "id": "les_04_measurement",
@@ -325,11 +343,29 @@ CURRICULUM_LESSONS = [
             {"type": "equation", "content": "Z = [[1, 0], [0, -1]]    =>    Z|0⟩ = |0⟩,   Z|1⟩ = -|1⟩"},
             {"type": "heading", "content": "3. The Pauli-Y Gate"},
             {"type": "text", "content": "The Pauli-Y gate performs both a bit-flip and a phase-flip accompanied by an imaginary coefficient:"},
-            {"type": "equation", "content": "Y = [[0, -i], [i, 0]]    =>    Y|0⟩ = i|1⟩,   Y|1⟩ = -i|0⟩"}
+            {"type": "equation", "content": "Y = [[0, -i], [i, 0]]    =>    Y|0⟩ = i|1⟩,   Y|1⟩ = -i|0⟩"},
+            {"type": "heading", "content": "4. Bloch Sphere Rotations and Pauli Algebra"},
+            {"type": "text", "content": "Each Pauli matrix generates a 180-degree (π radian) rotation about its respective Cartesian axis on the Bloch sphere. Together with the identity I, the Pauli matrices form a complete basis for all 2x2 Hermitian operators, satisfying the anti-commutation relations: {σ_i, σ_j} = 2δ_ij I and [σ_x, σ_y] = 2iσ_z."},
+            {"type": "heading", "content": "5. Practical Implementation in Quantum Lab"},
+            {"type": "text", "content": "In Quantum Lab, the Pauli-X gate acts as the fundamental deterministic state preparer. To transform the default |0⟩ state into |1⟩, simply place an X gate onto any qubit wire. Applying Z to a superposition state |+⟩ flips the phase, preparing |-⟩."},
+            {"type": "callout", "variant": "tip", "content": "Lab Practice: Test the bit-flip and phase-flip properties of the Pauli operators using the LAB PRACTICE button above."}
         ],
-        "content_markdown": "# Pauli Gates (X, Y, Z)\n\nLearn the Pauli matrix gates.",
-        "initial_circuit_json": None,
-        "interactive_meta_json": None
+        "content_markdown": "# Pauli Gates (X, Y, Z)\n\nLearn the Pauli matrix gates, Bloch sphere rotations, and bit/phase flips.",
+        "initial_circuit_json": {
+            "schema_version": "1.0.0",
+            "name": "Pauli Gates Circuit",
+            "qubits": 1,
+            "classical_bits": 1,
+            "gates": [
+                {"id": "g-x0", "type": "X", "target": 0, "step": 0},
+                {"id": "g-m0", "type": "MEASURE", "target": 0, "step": 1}
+            ],
+            "measurements": [{"qubit": 0, "classical_bit": 0}]
+        },
+        "interactive_meta_json": {
+            "type": "quantum_lab",
+            "label": "Open Pauli Gates in Quantum Lab"
+        }
     },
 
     # --------------------------------------------------------------------------
@@ -361,7 +397,7 @@ CURRICULUM_LESSONS = [
                 "|10⟩ = |1⟩ ⊗ |0⟩ = [0, 0, 1, 0]^T",
                 "|11⟩ = |1⟩ ⊗ |1⟩ = [0, 0, 0, 1]^T"
             ]},
-            {"type": "callout", "variant": "info", "content": "Qubit Ordering Convention: In QUANTUMANIA (and Qiskit), bitstrings use little-endian notation |q1 q0⟩ where q0 is the least significant qubit and top wire."}
+            {"type": "callout", "variant": "info", "content": "Qubit Ordering Convention: In QVerse (and Qiskit), bitstrings use little-endian notation |q1 q0⟩ where q0 is the least significant qubit and top wire."}
         ],
         "content_markdown": "# Multiple Qubits\n\nUnderstand tensor products and 4D state spaces.",
         "initial_circuit_json": None,
@@ -392,11 +428,31 @@ CURRICULUM_LESSONS = [
                 "CNOT |10⟩ = |11⟩  (Control is 1 => target flipped 0 -> 1)",
                 "CNOT |11⟩ = |10⟩  (Control is 1 => target flipped 1 -> 0)"
             ]},
-            {"type": "callout", "variant": "formula", "content": "CNOT Matrix: A 4x4 permutation matrix with identity in the top-left 2x2 and Pauli-X in the bottom-right 2x2 block."}
+            {"type": "callout", "variant": "formula", "content": "CNOT Matrix: A 4x4 permutation matrix with identity in the top-left 2x2 and Pauli-X in the bottom-right 2x2 block."},
+            {"type": "heading", "content": "3. Entanglement and Phase Kickback Mechanism"},
+            {"type": "text", "content": "When the control qubit is placed in a superposition state such as (|0⟩ + |1⟩)/√2 and the target is in |0⟩, the CNOT gate entangles the two qubits, generating the canonical Bell state (|00⟩ + |11⟩)/√2. Furthermore, if the target qubit is prepared in |-⟩ = (|0⟩ - |1⟩)/√2, applying CNOT kicks an eigenvalue of -1 back onto the control qubit — the foundational mechanism behind the Deutsch, Simon, and Shor algorithms."},
+            {"type": "heading", "content": "4. Hands-On CNOT Verification in Quantum Lab"},
+            {"type": "text", "content": "In Quantum Lab, the CNOT gate is represented by a solid control dot on the control wire connected by a vertical line to a circle-plus target symbol on the target wire. In Qiskit, this is written as qc.cx(control, target)."},
+            {"type": "callout", "variant": "tip", "content": "Lab Practice: Experiment with control inputs |0⟩ and |1⟩ to verify target flipping by clicking the LAB PRACTICE button above."}
         ],
-        "content_markdown": "# Controlled Operations (CNOT)\n\nMaster the CNOT gate.",
-        "initial_circuit_json": None,
-        "interactive_meta_json": None
+        "content_markdown": "# Controlled Operations (CNOT)\n\nMaster the Controlled-NOT gate, entanglement generation, and phase kickback.",
+        "initial_circuit_json": {
+            "schema_version": "1.0.0",
+            "name": "CNOT Gate Circuit",
+            "qubits": 2,
+            "classical_bits": 2,
+            "gates": [
+                {"id": "g-cnot-01", "type": "CNOT", "control": 0, "target": 1, "step": 0}
+            ],
+            "measurements": [
+                {"qubit": 0, "classical_bit": 0},
+                {"qubit": 1, "classical_bit": 1}
+            ]
+        },
+        "interactive_meta_json": {
+            "type": "quantum_lab",
+            "label": "Open CNOT in Quantum Lab"
+        }
     },
     {
         "id": "les_11_entanglement",
@@ -619,7 +675,7 @@ CURRICULUM_LESSONS = [
             {"type": "heading", "content": "2. Creating a QuantumCircuit Object"},
             {"type": "text", "content": "A circuit in Qiskit is instantiated by specifying the number of quantum bits (wires) and classical bits (for measurement storage):"},
             {"type": "code", "language": "python", "content": "from qiskit import QuantumCircuit\n\n# Create a circuit with 2 qubits and 2 classical bits\nqc = QuantumCircuit(2, 2)\n\n# Apply Hadamard to qubit 0\nqc.h(0)\n\n# Apply CNOT with control qubit 0 and target qubit 1\nqc.cx(0, 1)\n\n# Measure both qubits onto classical register\nqc.measure([0, 1], [0, 1])\n\nprint(qc)"},
-            {"type": "callout", "variant": "tip", "content": "QUANTUMANIA Export: In future Phase 5, the AI Tutor includes an automated code generation tool that exports your visual canvas directly into executable Qiskit code!"}
+            {"type": "callout", "variant": "tip", "content": "QVerse Export: In future Phase 5, the AI Tutor includes an automated code generation tool that exports your visual canvas directly into executable Qiskit code!"}
         ],
         "content_markdown": "# Introduction to Qiskit\n\nLearn the fundamentals of Qiskit SDK.",
         "initial_circuit_json": None,
@@ -638,7 +694,7 @@ CURRICULUM_LESSONS = [
         "objectives": [
             "Execute the 5-step quantum circuit construction lifecycle",
             "Synthesize wire allocation, gate placement, and projective measurement",
-            "Verify circuit structure against the canonical QUANTUMANIA schema"
+            "Verify circuit structure against the canonical QVerse schema"
         ],
         "content_blocks": [
             {"type": "heading", "content": "1. The 5-Step Circuit Lifecycle"},
@@ -720,7 +776,7 @@ CURRICULUM_LESSONS = [
         "content_blocks": [
             {"type": "heading", "content": "1. The Quantum Engineering Loop"},
             {"type": "text", "content": "Congratulations on reaching the final milestone of Introduction to Quantum Computing! You have progressed from basic classical bits to multi-qubit entanglement and quantum algorithms."},
-            {"type": "text", "content": "In QUANTUMANIA, your workflow connects directly across subsystems:"},
+            {"type": "text", "content": "In QVerse, your workflow connects directly across subsystems:"},
             {"type": "bullet_list", "items": [
                 "1. Study Curriculum: Master concepts in the lesson viewer.",
                 "2. Construct Circuits: Drag and drop gates on the Phase 3 canvas.",

@@ -350,6 +350,9 @@ class SimulationService:
 
             return SimulationResultSchema(
                 success=True,
+                qubits=circuit.qubits,
+                depth=validation.depth,
+                operationCount=len(circuit.gates),
                 shots=shots,
                 counts=counts,
                 probabilities=probabilities,
@@ -363,6 +366,7 @@ class SimulationService:
             elapsed_ms = (time.perf_counter() - t0) * 1000.0
             return SimulationResultSchema(
                 success=False,
+                qubits=circuit.qubits,
                 shots=shots,
                 counts={},
                 probabilities={},
