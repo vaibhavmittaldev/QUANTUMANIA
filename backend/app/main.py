@@ -6,20 +6,23 @@ from app.core.config import settings
 from app.core.exceptions import AppException
 from app.db.base import Base, engine, SessionLocal
 from app.db.models.user import User, Profile
-from app.db.models.learning import Course, Module, Lesson, LessonProgress
+from app.db.models.learning import Course, Module, Lesson, LessonProgress, LabProblem, LabProgressRecord
 from app.db.models.adaptive import LearningEventModel, TopicMasteryModel
+from app.db.models.circuit import CircuitModel
 from app.services.learning_service import LearningService
 from app.services.demo_service import DemoService
+from app.services.lab_service import LabService
 from app.api.v1.router import api_v1_router
 from app.schemas.common import StandardErrorResponse, ErrorDetail
 
 # Initialize tables
 Base.metadata.create_all(bind=engine)
 
-# Seed canonical curriculum and demo learner
+# Seed canonical curriculum, lab problems, and demo learner
 _db = SessionLocal()
 try:
     LearningService.seed_curriculum_if_needed(_db)
+    LabService.seed_lab_problems_if_needed(_db)
     DemoService.seed_demo_account_if_needed(_db)
 finally:
     _db.close()

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { UserMenu } from './UserMenu';
 import { Menu, Bell } from 'lucide-react';
@@ -22,6 +22,10 @@ export const Topbar: React.FC<TopbarProps> = ({ onToggleMobile }) => {
   };
 
   const title = getPageTitle(location.pathname);
+
+  useEffect(() => {
+    document.title = `QVerse — ${title}`;
+  }, [title]);
 
   return (
     <header

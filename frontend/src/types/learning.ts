@@ -24,6 +24,7 @@ export interface LessonSummary {
   display_order: number;
   is_completed: boolean;
   has_interactive_circuit: boolean;
+  has_lab_practice?: boolean;
 }
 
 export interface ModuleSummary {
@@ -80,7 +81,72 @@ export interface LessonDetail {
   initial_circuit?: Record<string, unknown> | null;
   interactive?: InteractiveMeta | null;
   is_completed: boolean;
+  has_lab_practice?: boolean;
+  topic_id?: string;
+  lab_problems?: LabProblemSummary[];
   navigation: LessonNavigation;
+}
+
+export interface LabProblemSummary {
+  id: string;
+  lesson_id: string;
+  topic_id: string;
+  title: string;
+  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  estimated_minutes: number;
+  order: number;
+  is_completed: boolean;
+  xp_reward: number;
+}
+
+export interface LabProblemDetail {
+  id: string;
+  lesson_id: string;
+  topic_id: string;
+  title: string;
+  description: string;
+  objective: string;
+  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  instructions: string[];
+  expected_concepts: string[];
+  starter_circuit?: string | null;
+  starter_circuit_data?: Record<string, unknown> | null;
+  required_gates: string[];
+  expected_behavior: Record<string, unknown>;
+  hints: string[];
+  success_criteria: string[];
+  explanation: string;
+  estimated_minutes: number;
+  order: number;
+  is_completed: boolean;
+  xp_reward: number;
+}
+
+export interface LabValidationCheckResult {
+  name: string;
+  passed: boolean;
+  message?: string;
+  details?: string;
+}
+
+export interface LabValidationResponse {
+  lab_problem_id?: string;
+  problem_id?: string;
+  passed: boolean;
+  is_valid?: boolean;
+  score?: number;
+  message?: string;
+  feedback?: string;
+  checks: LabValidationCheckResult[];
+  explanation?: string | null;
+  xp_awarded: number;
+  is_completed?: boolean;
+  next_problem_id?: string | null;
+}
+
+export interface LabValidationRequest {
+  circuit: Record<string, unknown>;
+  simulation_result?: Record<string, unknown> | null;
 }
 
 export interface LessonCompleteResponse {

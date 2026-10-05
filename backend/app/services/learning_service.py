@@ -81,6 +81,14 @@ class LearningService:
                     display_order=l_data["display_order"]
                 )
                 db.add(les)
+            else:
+                les.title = l_data["title"]
+                les.description = l_data["description"]
+                les.content_markdown = l_data["content_markdown"]
+                les.content_json = l_data["content_blocks"]
+                les.objectives_json = l_data["objectives"]
+                les.initial_circuit_json = l_data["initial_circuit_json"]
+                les.interactive_meta_json = l_data["interactive_meta_json"]
 
         db.commit()
 
@@ -157,7 +165,9 @@ class LearningService:
                     xp_reward=l.xp_reward,
                     display_order=l.display_order,
                     is_completed=l.id in completed_ids,
-                    has_interactive_circuit=bool(l.initial_circuit_json or l.interactive_meta_json)
+                    has_interactive_circuit=bool(l.initial_circuit_json or l.interactive_meta_json),
+                    has_lab_practice=len(l.lab_problems) > 0,
+                    lab_problem_count=len(l.lab_problems)
                 )
                 for l in lessons
             ]
@@ -217,7 +227,9 @@ class LearningService:
                 xp_reward=l.xp_reward,
                 display_order=l.display_order,
                 is_completed=l.id in completed_ids,
-                has_interactive_circuit=bool(l.initial_circuit_json or l.interactive_meta_json)
+                has_interactive_circuit=bool(l.initial_circuit_json or l.interactive_meta_json),
+                has_lab_practice=len(l.lab_problems) > 0,
+                lab_problem_count=len(l.lab_problems)
             )
             for l in lessons
         ]
@@ -277,6 +289,9 @@ class LearningService:
             for b in blocks_raw
         ]
 
+        from app.services.lab_service import LabService
+        lab_problems = LabService.get_lab_problems_for_lesson(db, lesson.id, user)
+
         return LessonDetail(
             id=lesson.id,
             module_id=lesson.module_id,
@@ -298,7 +313,9 @@ class LearningService:
             navigation=LessonNavigation(
                 previous_lesson_id=prev_id,
                 next_lesson_id=next_id
-            )
+            ),
+            has_lab_practice=len(lab_problems) > 0,
+            lab_problems=lab_problems
         )
 
     @staticmethod

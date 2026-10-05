@@ -1,7 +1,6 @@
 /**
  * QUANTUMANIA - Canonical Quantum Circuit TypeScript Types
- * Phase 3: Quantum Circuit Builder
- * Conforms to docs/QUANTUM_SCHEMA.md (Schema Version: 1.0.0)
+ * Unified interface supporting Phase 3 & 4 Quantum Builder & QuantumLab fidelity.
  */
 
 export type GateType =
@@ -21,10 +20,15 @@ export type GateType =
 
 export type GateCategory = 'basic' | 'phase' | 'controlled' | 'measurement' | 'parametric';
 
+export interface ComplexNumber {
+  re: number;
+  im: number;
+}
+
 export interface GateParams {
-  theta?: number;
-  phi?: number;
-  lambda?: number;
+  theta?: number | string;
+  phi?: number | string;
+  lambda?: number | string;
 }
 
 export interface QuantumGate {
@@ -35,7 +39,9 @@ export interface QuantumGate {
   control?: number;
   controls?: number[];
   step: number;
+  column?: number;
   params?: GateParams;
+  parameters?: Record<string, any>;
 }
 
 export interface MeasurementMapping {
@@ -44,26 +50,38 @@ export interface MeasurementMapping {
 }
 
 export interface CanonicalCircuit {
-  schema_version: '1.0.0';
+  schema_version?: '1.0.0';
   id?: string;
   name?: string;
+  title?: string;
   description?: string;
   qubits: number;
+  numQubits?: number;
   classical_bits: number;
+  numClassicalBits?: number;
+  depth?: number;
   gates: QuantumGate[];
+  operations?: QuantumGate[];
   measurements?: MeasurementMapping[];
+  metadata?: Record<string, any>;
 }
 
 export interface GateDefinition {
-  type: GateType;
+  type?: GateType;
   symbol: string;
+  displaySymbol?: string;
   name: string;
-  category: GateCategory;
+  category: string;
   description: string;
-  qubitsRequired: number;
-  matrixPreview: string;
-  accessibleLabel: string;
-  badgeColor: string;
+  qubitsRequired?: number;
+  matrixPreview?: string;
+  accessibleLabel?: string;
+  badgeColor?: string;
+  colorClass?: string;
+  bgClass?: string;
+  borderClass?: string;
+  defaultParam?: string;
+  aliases?: string[];
 }
 
 export interface CircuitValidationError {
@@ -99,8 +117,27 @@ export interface BlochVector {
   z: number;
 }
 
+export interface BackendInfo {
+  id: string;
+  framework: string;
+  mode: string;
+  version?: string;
+}
+
+export interface NoiseConfig {
+  enabled: boolean;
+  model?: string;
+  errorRate?: number;
+}
+
 export interface SimulationOptions {
   shots?: number;
+  backend?: string;
+  framework?: string;
+  mode?: string;
+  noise?: NoiseConfig;
+  stepIndex?: number;
+  seed?: number;
   rng?: () => number;
   tolerance?: number;
 }
@@ -110,6 +147,7 @@ export interface SimulationResult {
   circuit_id?: string;
   circuitId?: string;
   qubits: number;
+  numQubits?: number;
   depth: number;
   operationCount: number;
   shots: number;
@@ -120,8 +158,45 @@ export interface SimulationResult {
   bloch_vectors?: BlochVector[];
   execution_time_ms: number;
   executionTimeMs?: number;
+  backend?: BackendInfo;
+  currentStep?: number;
+  current_step?: number;
+  noise?: NoiseConfig;
   explanation?: string;
   error?: string;
+}
+
+export interface CompareResult {
+  backends_tested: string[];
+  results: Record<string, any>;
+  consistent: boolean;
+  discrepancies: string[];
+  tolerance_used: number;
+}
+
+export interface SavedCircuit {
+  id: string;
+  title: string;
+  qubits: number;
+  numQubits?: number;
+  classical_bits: number;
+  numClassicalBits?: number;
+  canonical: CanonicalCircuit;
+  qiskit_code?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SaveCircuitResponse {
+  success: boolean;
+  circuit_id: string;
+  message: string;
+}
+
+export interface OpenQASMExportResponse {
+  qasm: string;
+  qubits: number;
+  depth: number;
 }
 
 export interface CircuitTemplate {

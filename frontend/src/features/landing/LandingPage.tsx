@@ -1,8 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Atom, Cpu, Sparkles, BookOpen, BarChart3, ArrowRight, ShieldCheck, Zap } from 'lucide-react';
+import { QVerseLogo } from '../../components/common/QVerseLogo';
+import { useDocumentTitle } from '../../components/common/useDocumentTitle';
 
 export const LandingPage: React.FC = () => {
+  useDocumentTitle('Interactive Quantum Algorithm Learning Platform');
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-base)' }}>
       {/* Navigation */}
@@ -26,34 +29,8 @@ export const LandingPage: React.FC = () => {
             justifyContent: 'space-between'
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <div
-              style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: 'var(--radius-md)',
-                background: 'linear-gradient(135deg, var(--accent-cyan), var(--accent-purple))',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#04101e'
-              }}
-            >
-              <Atom size={22} aria-hidden="true" />
-            </div>
-            <span
-              style={{
-                fontFamily: 'var(--font-heading)',
-                fontSize: '1.25rem',
-                fontWeight: 700,
-                letterSpacing: '-0.02em',
-                background: 'linear-gradient(135deg, #ffffff 40%, var(--accent-cyan) 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent'
-              }}
-            >
-              QUANTUMANIA
-            </span>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <QVerseLogo variant="full" height={34} />
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -352,7 +329,7 @@ export const LandingPage: React.FC = () => {
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
           <ShieldCheck size={16} color="var(--accent-cyan)" />
-          <span>QUANTUMANIA — SIH 2026 Phase 1 Verified Architecture</span>
+          <span>QVerse — SIH 2026 Phase 1 Verified Architecture</span>
         </div>
         <p style={{ color: 'var(--text-muted)' }}>
           Built with precision by Vaibhav & Tanishq. All contracts adheres to official repository specifications.
